@@ -1,4 +1,4 @@
-//headerss
+//headers
 #include <polysat/polysat.h>
 //include IMU driver
 
