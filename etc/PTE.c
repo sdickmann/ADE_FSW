@@ -6,9 +6,9 @@
 //definitions
 #define MAX_PASS 3000
 #define T_STEP 1 //nominal time step
-#define PTE_CYCLE 1200
+#define PTE_CYCLE 1500
 #define SIZE 4 //(n+1) order of temp correction
-#define WINDOW 100 //size of window filter
+#define WINDOW 120 //size of window filter
 #define CALIBRATION_PERIOD 150 //size of calibration period, seconds
 //structures
 struct IMUData {
