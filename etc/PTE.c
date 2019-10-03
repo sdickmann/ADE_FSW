@@ -13,9 +13,10 @@
 //structures
 struct IMUData {
 	double t[MAX_PASS];
-	float x[MAX_PASS];
-	float y[MAX_PASS];
-	float z[MAX_PASS];
+	double x[MAX_PASS];
+	double y[MAX_PASS];
+	double z[MAX_PASS];
+	double temp[MAX_PASS];
 };
 
 //functions
@@ -99,7 +100,7 @@ long double det(long double mat[][SIZE], int n){
 	return mat_det;	
 }
 
-void inv(long double mat[][SIZE], long double mat_inv[][SIZE], int n){
+int inv(long double mat[][SIZE], long double mat_inv[][SIZE], int n){
 
 	int i;
 	int j;
@@ -107,7 +108,8 @@ void inv(long double mat[][SIZE], long double mat_inv[][SIZE], int n){
 	long double mat_det;
 	long double minor_mat[SIZE][SIZE];
 	long double cofac_mat[SIZE][SIZE];
-
+	int is_invertible;
+	
 	for (i = 0; i<n; i++){
 		for (j=0;j<n;j++){
 			minor(mat, minor_mat, i, j, n);
@@ -115,15 +117,26 @@ void inv(long double mat[][SIZE], long double mat_inv[][SIZE], int n){
 			cofac_mat[i][j] = cofac[i][j];
 		}
 	}
+	
 	mat_det = det(mat, n);
 
-	for (i=0;i<n;i++){
-		for (j=0;j<n;j++){
-			mat_inv[i][j] = cofac_mat[j][i]/mat_det;
+	if (mat_det) {
+		is_invertible = 1;
+		for (i=0;i<n;i++){
+			for (j=0;j<n;j++){
+				mat_inv[i][j] = cofac_mat[j][i]/mat_det;
+			}
+		}
+	} else {
+		is_invertible = 0;
+		for (i=0;i<n;i++){
+			for (j=0;j<n;j++){
+				mat_inv[i][j] = cofac_mat[j][i];
+			}
 		}
 	}
 	
-	return;
+	return is_invertible;
 }
 
 void temp_correction(double time[], double accel[], double temp[], int n, double filtered[]){
@@ -137,7 +150,8 @@ void temp_correction(double time[], double accel[], double temp[], int n, double
 	int k;
 	long double xtx_inv[SIZE][SIZE];
 	long double inv_xt[SIZE][2*CALIBRATION_PERIOD]={0};
-
+	int invertible;
+	
 	// note: this filter was designed for a cubic fit
 
 	for (i=0;i<CALIBRATION_PERIOD;i++){
@@ -145,7 +159,7 @@ void temp_correction(double time[], double accel[], double temp[], int n, double
 		X[i][1] = pow(temp[i], 2);
 		X[i][2] = temp[i];
 		X[i][3] = 1;
-		X[2*CALIBRATION_PERIOD-i][0] = pow[temp[n-i], 3];
+		X[2*CALIBRATION_PERIOD-i][0] = pow(temp[n-i], 3);
 		X[2*CALIBRATION_PERIOD-i][1] = pow(temp[n-i], 2);
 		X[2*CALIBRATION_PERIOD-i][2] = temp[n-i];
 		X[2*CALIBRATION_PERIOD-i][3] = 1;
@@ -167,25 +181,30 @@ void temp_correction(double time[], double accel[], double temp[], int n, double
 		}
 	}
 
-	inv(xtx, xtx_inv, SIZE);
-
-	for (i=0;i<SIZE;i++){
-		for(j=0;j<2*CALIBRATION_PERIOD;j++){
-			for(k=0;k<SIZE;k++){
-				inv_xt[i][j] += xtx_inv[i][k]*XT[k][j];
+	if (inv(xtx, xtx_inv, SIZE)) {
+		for (i=0;i<SIZE;i++){
+			for(j=0;j<2*CALIBRATION_PERIOD;j++){
+				for(k=0;k<SIZE;k++){
+					inv_xt[i][j] += xtx_inv[i][k]*XT[k][j];
+				}
 			}
 		}
-	}
+		
+		for (i=0; i<4; i++){
+			for (k=0;k<2*CALIBRATION_PERIOD;k++){
+				coef[i] += inv_xt[i][k]*accel_calibration[k];
+			}
+		}
 
-	for (i=0; i<SIZE; i++){
-		for (k=0;k<2*CALIBRATION_PERIOD;k++){
-			coef[i] += inv_xt[i][k]*accel_calibration[k];
+		for (i=0; i<n; i++){
+			filtered[i] = accel[i] - (coef[0]*pow(temp[i],3) + coef[1]*pow(temp[i],2) + coef[2]*temp[i] + coef[3]*1);
+		}
+	} else {
+		for (i=0; i<n; i++){
+			filtered[i] = accel[i];
 		}
 	}
-
-	for (i=0; i<n; i++){
-		filtered[i] = accel[i] - (coef[0]*pow(temp[i],3) + coef[1]*pow(temp[i],2) + coef[2]*temp[i] + coef[3]*1);
-	}
+	
 	return;
 }
 
@@ -199,19 +218,18 @@ double mean_window(double data[], int n){
 	return sum/n;
 }
 
-double window_filter(double accel[], int window, int n, double filter[]){
+double window_filter(double accel[], int n, double filter[]){
 	int k;
 	double mean_accel[WINDOW];
 	int i;
 	double th;
 	double mean_filter = 0;
 
-	for (k=floor(WINDOW/2); k<=n-floor(WINDOW/2); k++){
+	for (k=floor(WINDOW/2)-1; k<n-floor(WINDOW/2); k++){
 		for (i=0; i<WINDOW; i++){
 			mean_accel[i]=accel[(int) (k-floor(WINDOW/2)) + i];
 		}
-		filter[k] = mean_window(mean_accel, WINDOW);
-		printf("accel: %f mean: %f\n", accel[k], mean_window(mean_accel,WINDOW));
+		filter[k-1] = mean_window(mean_accel, WINDOW);
 	}
 
 	for (i=0;i<WINDOW/2;i++){
@@ -242,28 +260,13 @@ double window_filter(double accel[], int window, int n, double filter[]){
 	return th;
 }
 
-void PTE_start(int socket, unsigned char cmd, void * data, size_t dataLen, struct sockaddr_in * src)
-{
-	//this function is used to start PTE and IMU? from ground command
-
-	PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &status, sizeof(status), src);
-}
-
-int sigint_handler(int signum, void *arg)
-{
-	EVT_exit_loop(PROC_evt(arg));
-	return EVENT_KEEP;
-}
-
 double PTE_process(struct IMUData data, double t_step, double a_filter[], int array_size, double t[])
 {
-	double a_mag[(int) floor(PTE_CYCLE/t_step)]; // should hold 20 minutes of data
+	double a_mag[(int) floor(PTE_CYCLE/t_step)]; // should hold 25 minutes of data
 	double corrected[(int) floor(PTE_CYCLE/t_step)];
 	double th; // threshold value
 	int i;
-	int j; // start of 20 mins of data
 
-	j = floor(5*60/t_step);
 	// read IMU
 	for (i = 0; i < (int) floor(PTE_CYCLE/t_step); i++){
 		a_mag[i] = sqrt(pow(data.x[i],2) + pow(data.y[i],2) + pow(data.z[i],2));
@@ -276,14 +279,13 @@ double PTE_process(struct IMUData data, double t_step, double a_filter[], int ar
 	th = window_filter(corrected, array_size, a_filter);
 
 	for (i=0;i<PTE_CYCLE;i++){
-		t[i] = data.t[i+j];
+		t[i] = data.t[i];
 	}
 
 	return th;
 }
 
-
-double PTE(double a_m[], double t[],  double th, double t_step, double *tp_err, int *pass, double *period, double *tp_cent, double tp_prev, double tp_est_prev, double r_p, int array_size)
+long double PTE(double a_m[], double t[],  double th, double t_step, long double *tp_err, int *pass, long double *period, long double *tp_cent, long double tp_prev, long double tp_est_prev, double r_p, int array_size)
 {
 	double mu = 398600.44; // gravitational parameter (km^3/s^2)
 	int test = 0; // counter for crossing threshold
@@ -293,18 +295,18 @@ double PTE(double a_m[], double t[],  double th, double t_step, double *tp_err, 
 	int n_thresh = 3; // n consecutive values above threshold
 	int j;
 	int i;
-	double dv_m[MAX_PASS]; // trapezoidal integration
-	double dv_t[MAX_PASS]; // moment
-	double tp2; // drag pass centroid (MET)
+	long double dv_m; // trapezoidal integration
+	long double dv_t; // moment
+	long double tp2; // drag pass centroid (MET)
 	double dV; // delta V (km/s)
-	double period_prev; // previous period
-	double a1; // semi major axis before pass (km)
+	long double period_prev; // previous period
+	long double a1; // semi major axis before pass (km)
 	double Vp1; // periapsis velocity before pass (km/s)
 	double Vp2; // periapsis velocity after pass
-	double a2; // semi major axis after pass (km)
-	double tp_est; // periapsis time estimation
-	double sum_dv_t;
-	double sum_dv_m;
+	long double a2; // semi major axis after pass (km)
+	long double tp_est; // periapsis time estimation
+	long double sum_dv_t;
+	long double sum_dv_m;
 	
 	// threshold filter
 	for (j = 0; j < array_size; j++){
@@ -338,6 +340,7 @@ double PTE(double a_m[], double t[],  double th, double t_step, double *tp_err, 
 	
 	// threshold never reached
 	if (i_1 == 0){
+		printf("threshold never reached!\n");
 		i_2 = 0;
 	}
 
@@ -350,13 +353,12 @@ double PTE(double a_m[], double t[],  double th, double t_step, double *tp_err, 
 	sum_dv_m = 0;
 	sum_dv_t = 0;
 	while (i<i_2 && a_m[i+1]==a_m[i+1]){
-		dv_m[i] = t_step*(a_m[i]+a_m[i+1])/2;
-		dv_t[i] = dv_m[i]*(t[i]+t[i+1])/2;
-		sum_dv_m += dv_m[i];
-		sum_dv_t += dv_t[i];
+		dv_m = t_step*(a_m[i]+a_m[i+1])/2;
+		dv_t = dv_m*(t[i]+t[i+1])/2;
+		sum_dv_m += dv_m;
+		sum_dv_t += dv_t;
 		i++;
 	}
-
 	tp2 = sum_dv_t/sum_dv_m;
 	*tp_cent = tp2;
 	dV = sum_dv_m/1000;
@@ -376,7 +378,6 @@ double PTE(double a_m[], double t[],  double th, double t_step, double *tp_err, 
 	Vp2 = Vp1 - dV;
 	a2 = -mu/(2*(pow(Vp2, 2)/2 - mu/r_p));
 	*period = 2*M_PI*sqrt(pow(a2,3)/mu);
-
 	tp_est = tp2 + *period;
 
 	if (*pass == 2){
@@ -391,25 +392,38 @@ double PTE(double a_m[], double t[],  double th, double t_step, double *tp_err, 
 	return tp_est;
 }
 
+void PTE_start(int socket, unsigned char cmd, void * data, size_t dataLen, struct sockaddr_in * src)
+{
+	//this function is used to start PTE and IMU? from ground command
+
+	PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &status, sizeof(status), src);
+}
+
+int sigint_handler(int signum, void *arg)
+{
+	EVT_exit_loop(PROC_evt(arg));
+	return EVENT_KEEP;
+}
+
 void PTE_control(struct IMUData data)
 {
 	double t_step; // time step of data
 	double a_m[MAX_PASS]; // filtered acceleration magnitude data
 	int array_size; // a_m array size (depends on time step)
 	double th; // this should be a pointer
-	double tp_est; // periapsis time estimations
-	double tp_err_act;
-	double *tp_err; // periapsis time estimation error
+	long double tp_est; // periapsis time estimations
+	long double tp_err_act;
+	long double *tp_err; // periapsis time estimation error
 	int *pass; // pass number pointer
 	int pass_act;
-	double *period; // orbit period
-	double period_act;
-	double tp_hist[MAX_PASS]; // periapsis time history (need to make variable)
-	double *tp_cent; // centroided periapsis
-	double tp_cent_act;
-	double tp_prev; // hold previous periapsis
-	double tp_est_prev; // hold previous periapsis estimation
-	double tp_est_hist[MAX_PASS]; // periapsis estimation time history (need to make variable)
+	long double *period; // orbit period
+	long double period_act;
+	long double tp_hist[MAX_PASS]; // periapsis time history (need to make variable)
+	long double *tp_cent; // centroided periapsis
+	long double tp_cent_act;
+	long double tp_prev; // hold previous periapsis
+	long double tp_est_prev; // hold previous periapsis estimation
+	long double tp_est_hist[MAX_PASS]; // periapsis estimation time history (need to make variable)
 	double r_p; // radius of periapsis
 	double t[MAX_PASS];
 
