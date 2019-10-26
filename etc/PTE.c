@@ -532,7 +532,7 @@ void status(int socket, unsigned char cmd, void *data, size_t dataLen, struct so
 		
 	struct PTEStatus status;
 	
-	status.pass = pass;
+	status.pass = pass_act;
 	status.threshold = th;
 	status.delta_V = dV;
 	status.error = tp_err_act;
