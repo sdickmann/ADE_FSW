@@ -50,7 +50,6 @@ static double dV; // Delta-V (km/s)
 //functions
 void mat_minor(long double mat[][SIZE], long double cofac[][SIZE], int r, int c, int n){
 
-	long double mat_det=0;
 	int i;
 	int j;
 	long double hold_val;
@@ -77,7 +76,7 @@ void mat_minor(long double mat[][SIZE], long double cofac[][SIZE], int r, int c,
 
 long double det(long double mat[][SIZE], int n){
 
-	long double mat_det;
+	long double mat_det=0;
 	long double cofac[SIZE][SIZE];
 	int i;
 	int j;
@@ -87,8 +86,6 @@ long double det(long double mat[][SIZE], int n){
 	long double det_hold;
 	long double mat_val;
 
-	mat_det = 0;
-	
 	for (k=0;k<SIZE;k++){
 			for (j=0;j<SIZE;j++){
 				mat_hold[k][j] = mat[k][j];
