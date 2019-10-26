@@ -50,7 +50,7 @@ static int PTE_start(int argc, char **argv, struct MulticallInfo * self)
    } __attribute__((packed)) send;
 
    send.cmd = 2;
-   const char *ip = (char)socket_multicast_addr_by_name("PTE"); // get IP of PTE process
+   const char *ip = 0;//(char)socket_multicast_addr_by_name("PTE"); // get IP of PTE process
    int len, opt;
    
    while ((opt = getopt(argc, argv, "h:")) != -1) {
