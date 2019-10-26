@@ -1,241 +1,133 @@
-#include <PTE_util.h>
+/** 
+ * Test code for process command handling
+ * Based off of adcs example process
+ *
+ */
 
-void minor(long double mat[][SIZE], long double cofac[][SIZE], int r, int c, int n){
+#include <polysat/polysat.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <time.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <signal.h>
+#include <errno.h>
+#include <ctype.h>
 
-	long double mat_det=0;
-	int i;
-	int j;
-	int k=0;
-	long double hold_val;
+struct MulticallInfo;
 
-	for (i=0;i<n;i++){
-		if (i != r){
-			for (j=0;j<n;j++){
-				if (j != c){
-					hold_val = mat[i][j];
-					if (i < r & j < c)
-						cofac[i][j] = hold_val;
-					else if (i > r & j < c)
-						cofac[i-1][j] = hold_val;
-					else if (i < r & j > c)
-						cofac[i][j-1] = hold_val;
-					else if (i > r & j > c)
-						cofac[i-1][j-1] = hold_val;
-				}
-			}
-		}
-	}
-	return;
+static int PTE_start(int, char**, struct MulticallInfo *);
+static int PTE_safe(int, char**, struct MulticallInfo *);
+static int PTE_active(int, char**, struct MulticallInfo *);
+
+// struct holding all possible function calls
+// running the executable with the - flags will call that function
+// running without flags will print out this struct
+struct MulticallInfo {
+   int (*func)(int argc, char **argv, struct MulticallInfo *);
+   const char *name;
+   const char *opt;
+   const char *help;
+} multicall[] = {
+   { &PTE_start, "PTE-start", "-I", 
+       "Start PTE -I" }, 
+   { &PTE_safe, "PTE-safe", "-S", 
+       "Put PTE in safe mode -S" }, 
+	{ &PTE_active, "PTE-active", "-A", 
+       "PUT PTE in active mode -A" }, 
+   { NULL, NULL, NULL, NULL }
+};
+
+static int PTE_start(int argc, char **argv, struct MulticallInfo * self) 
+{
+
+   struct {
+      uint8_t cmd;
+   } __attribute__((packed)) send;
+
+   send.cmd = 2;
+   const char *ip = socket_multicast_addr_by_name("PTE"); // get IP of PTE process
+   int len, opt;
+   
+   while ((opt = getopt(argc, argv, "h:")) != -1) {
+      switch(opt) {
+         case 'h':
+            ip = optarg;
+            break;
+      }
+   }
+   
+   // send packet
+   if ((len = socket_send_packet_and_read_response(ip, "adcs", &send, 
+    sizeof(send), NULL, 0, 0)) <= 0) {
+      return len;
+   } // error if less than 0
+
+   return 0;
 }
 
-long double det(long double mat[][SIZE], int n){
-
-	long double mat_det=0;
-	long double cofac[SIZE][SIZE];
-	int i;
-	int j;
-	int k;
-	int m=0;
-	long double mat_hold[SIZE][SIZE];
-	long double det_hold;
-	long double mat_val;
-
-	for (k=0;k<SIZE;k++){
-			for (j=0;j<SIZE;j++){
-				mat_hold[k][j] = mat[k][j];
-			}
-	}
-	
-
-	if (n != SIZE){
-		for (k=0;k<n;k++){
-			for (j=0;j<n;j++){
-				if (k == 0 & j < n){
-					mat[k][j+m] = mat_hold[k][j];
-				} else if (k == 0 & j == n){
-					mat[k+1][0] = mat_hold[k][j];
-					m++;
-				} else if (k > 0 & j < n-m){
-					mat[k][j+m] = mat_hold[k][j];
-				} else if (k>0 & j >= n-m & j <SIZE){
-					mat[k+1][m-1] = mat_hold[k][j];
-					m++;
-				}
-			}
-		}
-	}
-
-	if (n == 1){
-		mat_det = mat[0][0];
-	} else if (n == 2){
-		mat_det = mat[0][0]*mat[1][1] - mat[0][1]*mat[1][0];
-	} else {
-		for (i = 0; i < n; i++){
-			mat_val = mat[0][i];
-			minor(mat,cofac,0,i,n);
-			det_hold = det(cofac,n-1);
-			mat_det += mat_val*pow(-1,i)*det_hold;
-		}
-	}
-	return mat_det;	
+/* 
+ * @param argc number of command line arguments
+ * @param argv char array of command line arguments
+ * @return 0 on succes, failure otherwise
+ */
+static int PTE_safe(int argc, char **argv, struct MulticallInfo * self) 
+{
+   return 0;
 }
 
-int inv(long double mat[][SIZE], long double mat_inv[][SIZE], int n){
-
-	int i;
-	int j;
-	long double cofac[SIZE][SIZE];
-	long double mat_det;
-	long double minor_mat[SIZE][SIZE];
-	long double cofac_mat[SIZE][SIZE];
-	int is_invertible;
-	
-	for (i = 0; i<n; i++){
-		for (j=0;j<n;j++){
-			minor(mat, minor_mat, i, j, n);
-			cofac[i][j] = pow(-1,i+j+2)*det(minor_mat, n-1);
-			cofac_mat[i][j] = cofac[i][j];
-		}
-	}
-	
-	mat_det = det(mat, n);
-
-	if (mat_det) {
-		is_invertible = 1;
-		for (i=0;i<n;i++){
-			for (j=0;j<n;j++){
-				mat_inv[i][j] = cofac_mat[j][i]/mat_det;
-			}
-		}
-	} else {
-		is_invertible = 0;
-		for (i=0;i<n;i++){
-			for (j=0;j<n;j++){
-				mat_inv[i][j] = cofac_mat[j][i];
-			}
-		}
-	}
-	
-	return is_invertible;
+static int PTE_active(int argc, char **argv, struct MulticallInfo * self) 
+{
+   return 0;
 }
 
-void temp_correction(double time[], double accel[], double temp[], int n, double filtered[]){
-	long double X[2*CALIBRATION_PERIOD][SIZE];
-	long double XT[SIZE][2*CALIBRATION_PERIOD];
-	long double accel_calibration[2*CALIBRATION_PERIOD];
-	int i;
-	int j;
-	long double coef[SIZE]={0};
-	long double xtx[SIZE][SIZE]={0};
-	int k;
-	long double xtx_inv[SIZE][SIZE];
-	long double inv_xt[SIZE][2*CALIBRATION_PERIOD]={0};
-	int invertible;
-	
-	// note: this filter was designed for a cubic fit
+// prints out available commands for this util
+static int print_usage(const char *name)
+{
+   struct MulticallInfo *curr;
 
-	for (i=0;i<CALIBRATION_PERIOD;i++){
-		X[i][0] = pow(temp[i], 3);
-		X[i][1] = pow(temp[i], 2);
-		X[i][2] = temp[i];
-		X[i][3] = 1;
-		X[2*CALIBRATION_PERIOD-i][0] = pow(temp[n-i], 3);
-		X[2*CALIBRATION_PERIOD-i][1] = pow(temp[n-i], 2);
-		X[2*CALIBRATION_PERIOD-i][2] = temp[n-i];
-		X[2*CALIBRATION_PERIOD-i][3] = 1;
-		accel_calibration[i] = accel[i];
-		accel_calibration[2*CALIBRATION_PERIOD-i] = accel[n-i];
-	}
-	
-	for (i=0; i<2*CALIBRATION_PERIOD; i++){
-		for (j=0;j<SIZE;j++){
-			XT[j][i] = X[i][j];
-		}
-	}
+   printf("PTE-util multicall binary, use the following names instead:\n");
 
-	for (i=0;i<SIZE;i++){
-		for (j=0;j<SIZE;j++){
-			for (k=0;k<2*CALIBRATION_PERIOD;k++){
-				xtx[i][j] += XT[i][k]*X[k][j];
-			}
-		}
-	}
+   for (curr = multicall; curr->func; curr++) {
+      printf("   %-16s %s\n", curr->name, curr->help);
+   }
 
-	if (inv(xtx, xtx_inv, SIZE)) {
-		for (i=0;i<SIZE;i++){
-			for(j=0;j<2*CALIBRATION_PERIOD;j++){
-				for(k=0;k<SIZE;k++){
-					inv_xt[i][j] += xtx_inv[i][k]*XT[k][j];
-				}
-			}
-		}
-		
-		for (i=0; i<4; i++){
-			for (k=0;k<2*CALIBRATION_PERIOD;k++){
-				coef[i] += inv_xt[i][k]*accel_calibration[k];
-			}
-		}
-
-		for (i=0; i<n; i++){
-			filtered[i] = accel[i] - (coef[0]*pow(temp[i],3) + coef[1]*pow(temp[i],2) + coef[2]*temp[i] + coef[3]*1);
-		}
-	} else {
-		for (i=0; i<n; i++){
-			filtered[i] = accel[i];
-		}
-	}
-	
-	return;
+   return 0;
 }
 
-double mean_window(double data[], int n){
-	double sum=0;
-	int i;
-	for (i=0;i<n;i++){
-		sum += data[i];
-	}
+int main(int argc, char **argv) 
+{   
+   struct MulticallInfo *curr;
+   char *exec_name;
 
-	return sum/n;
-}
+   exec_name = rindex(argv[0], '/');
+   if (!exec_name) {
+      exec_name = argv[0];
+   }
+   else {
+      exec_name++;
+   }
 
-double window_filter(double accel[], int n, double filter[]){
-	int k;
-	double mean_accel[WINDOW];
-	int i;
-	double th;
-	double mean_filter = 0;
+   for (curr = multicall; curr->func; curr++) {
+      if (!strcmp(curr->name, exec_name)) {
+         return curr->func(argc, argv, curr);
+      }
+   }
 
-	for (k=floor(WINDOW/2)-1; k<n-floor(WINDOW/2); k++){
-		for (i=0; i<WINDOW; i++){
-			mean_accel[i]=accel[(int) (k-floor(WINDOW/2)) + i];
-		}
-		filter[k-1] = mean_window(mean_accel, WINDOW);
-	}
+   if (argc > 1) {
+      for (curr = multicall; curr->func; curr++) {
+         if (!strcmp(curr->opt, argv[1])) {
+            return curr->func(argc - 1, argv + 1, curr);
+         }
+      }
+   }
+   else {
+      return print_usage(argv[0]);
+   }
 
-	for (i=0;i<WINDOW/2;i++){
-		filter[i]=filter[WINDOW/2];
-		filter[n-i]=filter[n-WINDOW/2];
-	}
-
-	for (i=0;i<300;i++){
-		mean_filter += filter[i] + filter[n-300];
-	}
-
-	mean_filter /= 600;
-
-	for (i=0;i<n;i++){
-		filter[i] -= mean_filter;
-	}
-	
-	for (i=0;i<n;i++){
-		if (i==0){
-			th = filter[i];
-		} else if (filter[i] > th){
-			th = filter[i];
-		}
-	}
-
-	th = th/4;
-
-	return th;
+   return 0;
 }

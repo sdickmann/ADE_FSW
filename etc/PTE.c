@@ -1,7 +1,7 @@
 //headers
 #include <math.h>
 #include <polysat/polysat.h>
-#include <PTE_util.h>
+#include <PTE_func.h>
 
 // global variables
 static ProcessData *proc = NULL;
@@ -235,6 +235,7 @@ void start(int socket, unsigned char cmd, void *data, size_t dataLen, struct soc
 	
 	mode = SAFE_MODE; // safe mode on start
 	listen_IMU = 1; // accept data from IMU flag
+	printf("Started\n");
 	return;
 }
 
