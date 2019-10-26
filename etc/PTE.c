@@ -518,7 +518,7 @@ void active_mode(int socket, unsigned char cmd, void *data, size_t dataLen, stru
 	return;
 }
 
-void status(int socket, unsigned char cmd, void *data, size_t dataLen, struct sockaddr_in *fromAddr){
+void PTE_status(int socket, unsigned char cmd, void *data, size_t dataLen, struct sockaddr_in *fromAddr){
 	
 	struct PTEStatus {
 		int pass;
