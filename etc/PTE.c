@@ -310,7 +310,7 @@ double PTE_process(struct IMUData data, double t_step, double a_filter[], int ar
 	return th;
 }
 
-long double PTE(double a_m[], double t[],  double th, double t_step, long double *tp_err, int *pass, long double *period, long double *tp_cent, long double tp_prev, long double tp_est_prev, double r_p, int array_size)
+long double PTE(double a_m[], double t[],  double th, double t_step, long double *tp_err, int *pass_no, long double *period, long double *tp_cent, long double tp_prev, long double tp_est_prev, double r_p, int array_size)
 {
 	double mu = 398600.44; // gravitational parameter (km^3/s^2)
 	int test = 0; // counter for crossing threshold
@@ -388,10 +388,10 @@ long double PTE(double a_m[], double t[],  double th, double t_step, long double
 	*tp_cent = tp2;
 	dV = sum_dv_m/1000;
 	// initial startup
-	if (*pass == 1){
+	if (*pass_no == 1){
 		tp_est = 0;
 		*tp_err = 0;
-		*pass = *pass + 1;
+		*pass_no = *pass_no + 1;
 		*period = 0;
 		return tp_est;
 	}
@@ -405,15 +405,15 @@ long double PTE(double a_m[], double t[],  double th, double t_step, long double
 	*period = 2*M_PI*sqrt(pow(a2,3)/mu);
 	tp_est = tp2 + *period;
 
-	if (*pass == 2){
+	if (*pass_no == 2){
 		*tp_err = 0;
-		*pass = *pass + 1;
+		*pass_no = *pass_no + 1;
 		return tp_est;
 	}
 	
 	*tp_err = tp_est_prev - tp2;
 
-	*pass = *pass + 1;
+	*pass_no = *pass_no + 1;
 	return tp_est;
 }
 	
@@ -433,7 +433,7 @@ void PTE_control(struct IMUData data, int mode)
 	int array_size; // a_m array size (depends on time step)
 	long double tp_est; // Periapsis time estimations
 	long double *tp_err; // Periapsis time estimation error
-	int *pass; // Pass number pointer
+	int *pass_no; // Pass number pointer
 	long double *period; // Orbit period pointer
 	long double *tp_cent; // Centroided periapsis
 	long double tp_prev; // Hold previous periapsis
@@ -442,14 +442,14 @@ void PTE_control(struct IMUData data, int mode)
 	double 
 
 	// Initialize pointers
-	pass = &pass_act;	
+	pass_no = &pass_act;	
 	tp_err = &tp_err_act;
 	period = &period_act;
 	tp_cent = &tp_cent_act;
 	
 	// (!) Read latest data
-	tp_prev = tp_hist[*pass-1];
-	tp_est_prev = tp_est_hist[*pass-1];
+	tp_prev = tp_hist[*pass_no-1];
+	tp_est_prev = tp_est_hist[*pass_no-1];
 	//r_p = read_r_p();
 	
 	t_step = data.t[1]-data.t[0];
@@ -457,12 +457,12 @@ void PTE_control(struct IMUData data, int mode)
 	
 	th = PTE_process(data, t_step,  a_m, array_size, t); // process raw data, output th, change a_m
 	
-	tp_est = PTE(a_m, t, th, t_step, tp_err, pass, period, tp_cent, tp_prev, tp_est_prev, r_p, array_size);
+	tp_est = PTE(a_m, t, th, t_step, tp_err, pass_no, period, tp_cent, tp_prev, tp_est_prev, r_p, array_size);
 
-	// (!) Store pass centroids and time estimations so they can be read again
-	tp_hist[*pass-1] = tp_cent_act;
-	tp_est_hist[*pass-1] = tp_est;
-	tp_err_hist[*pass-1] = tp_err_act;
+	// (!) Store pass_no centroids and time estimations so they can be read again
+	tp_hist[*pass_no-1] = tp_cent_act;
+	tp_est_hist[*pass_no-1] = tp_est;
+	tp_err_hist[*pass_no-1] = tp_err_act;
 	
 	// (!) write to PTT
 	//PTT_write(tp_est);
@@ -536,7 +536,7 @@ void status(int socket, unsigned char cmd, void *data, size_t dataLen, struct so
 	status.threshold = th;
 	status.delta_V = dV;
 	status.error = tp_err_act;
-	status.estimation = tp_est_hist[pass-1];
+	status.estimation = tp_est_hist[pass_act-1];
 	
 	PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &status, sizeof(status), fromAddr);
 }
