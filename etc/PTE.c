@@ -477,7 +477,7 @@ void IMU_trigger(int socket, unsigned char cmd, void *data, size_t dataLen, stru
 	
 	if (listen_IMU){
 		// (!) make sure input data is in correct format
-		accel_data = &data;
+		//accel_data = &data;
 	
 		// run PTE using IMU data
 		PTE_control(accel_data, mode);
@@ -553,7 +553,7 @@ int main(int argc, char *argv[])
 	mode = SAFE_MODE; // default to safe mode
 	
 	//Start main event loop (idk what this does)
-	EVT_start_loop(PROC_event(proc));	
+	EVT_start_loop(PROC_evt(proc));	
 
 	//Cleanup on exit
 	PROC_cleanup(proc);
