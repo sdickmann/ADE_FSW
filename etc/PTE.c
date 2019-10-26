@@ -3,7 +3,7 @@
 #include <polysat/polysat.h>
 #include <polysat/cmd.h>
 #include <polysat/events.h>
-#include <polysat/proclibcd .h>
+#include <polysat/proclib.h>
 
 //definitions
 #define MAX_PASS 3000
