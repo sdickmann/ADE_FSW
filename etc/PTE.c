@@ -1,6 +1,9 @@
 //headers
 #include <math.h>
 #include <polysat/polysat.h>
+#include <polysat/cmd.h>
+#include <polysat/events.h>
+#include <polysat/proclibcd .h>
 
 //definitions
 #define MAX_PASS 3000
@@ -22,7 +25,7 @@ struct IMUData {
 };
 
 //functions
-void minor(long double mat[][SIZE], long double cofac[][SIZE], int r, int c, int n);
+void mat_minor(long double mat[][SIZE], long double cofac[][SIZE], int r, int c, int n);
 long double det(long double mat[][SIZE], int n);
 int inv(long double mat[][SIZE], long double mat_inv[][SIZE], int n);
 void temp_correction(double time[], double accel[], double temp[], int n, double filtered[]);
@@ -45,7 +48,7 @@ static double th; // Threshold value
 static double dV; // Delta-V (km/s)
 
 //functions
-void minor(long double mat[][SIZE], long double cofac[][SIZE], int r, int c, int n){
+void mat_minor(long double mat[][SIZE], long double cofac[][SIZE], int r, int c, int n){
 
 	long double mat_det=0;
 	int i;
@@ -117,7 +120,7 @@ long double det(long double mat[][SIZE], int n){
 	} else {
 		for (i = 0; i < n; i++){
 			mat_val = mat[0][i];
-			minor(mat,cofac,0,i,n);
+			mat_minor(mat,cofac,0,i,n);
 			det_hold = det(cofac,n-1);
 			mat_det += mat_val*pow(-1,i)*det_hold;
 		}
@@ -137,7 +140,7 @@ int inv(long double mat[][SIZE], long double mat_inv[][SIZE], int n){
 	
 	for (i = 0; i<n; i++){
 		for (j=0;j<n;j++){
-			minor(mat, minor_mat, i, j, n);
+			mat_minor(mat, minor_mat, i, j, n);
 			cofac[i][j] = pow(-1,i+j+2)*det(minor_mat, n-1);
 			cofac_mat[i][j] = cofac[i][j];
 		}
@@ -529,7 +532,7 @@ void status(int socket, unsigned char cmd, void *data, size_t dataLen, struct so
 		long double estimation;
 	};
 		
-	PTEStatus status;
+	struct PTEStatus status;
 	
 	status.pass = pass;
 	status.threshold = th;
