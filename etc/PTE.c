@@ -53,7 +53,6 @@ void mat_minor(long double mat[][SIZE], long double cofac[][SIZE], int r, int c,
 	long double mat_det=0;
 	int i;
 	int j;
-	int k=0;
 	long double hold_val;
 
 	for (i=0;i<n;i++){
@@ -61,13 +60,13 @@ void mat_minor(long double mat[][SIZE], long double cofac[][SIZE], int r, int c,
 			for (j=0;j<n;j++){
 				if (j != c){
 					hold_val = mat[i][j];
-					if (i < r & j < c)
+					if ( (i < r) & (j < c) )
 						cofac[i][j] = hold_val;
-					else if (i > r & j < c)
+					else if ( (i > r) & (j < c) )
 						cofac[i-1][j] = hold_val;
-					else if (i < r & j > c)
+					else if ( (i < r) & (j > c) )
 						cofac[i][j-1] = hold_val;
-					else if (i > r & j > c)
+					else if ( (i > r) & (j > c) )
 						cofac[i-1][j-1] = hold_val;
 				}
 			}
@@ -98,14 +97,14 @@ long double det(long double mat[][SIZE], int n){
 	if (n != SIZE){
 		for (k=0;k<n;k++){
 			for (j=0;j<n;j++){
-				if (k == 0 & j < n){
+				if ( (k == 0) & (j < n) ){
 					mat[k][j+m] = mat_hold[k][j];
-				} else if (k == 0 & j == n){
+				} else if ( (k == 0) & (j == n) ){
 					mat[k+1][0] = mat_hold[k][j];
 					m++;
-				} else if (k > 0 & j < n-m){
+				} else if ( (k > 0) & (j < n-m) ){
 					mat[k][j+m] = mat_hold[k][j];
-				} else if (k>0 & j >= n-m & j <SIZE){
+				} else if ( (k > 0) & (j >= n-m) & (j < SIZE) ){
 					mat[k+1][m-1] = mat_hold[k][j];
 					m++;
 				}
@@ -178,7 +177,6 @@ void temp_correction(double time[], double accel[], double temp[], int n, double
 	int k;
 	long double xtx_inv[SIZE][SIZE];
 	long double inv_xt[SIZE][2*CALIBRATION_PERIOD]={0};
-	int invertible;
 	
 	// note: this filter was designed for a cubic fit
 
@@ -418,30 +416,6 @@ long double PTE(double a_m[], double t[],  double th, double t_step, long double
 	*pass = *pass + 1;
 	return tp_est;
 }
-
-void IMU_trigger(int socket, unsigned char cmd, void *data, size_t dataLen, struct sockaddr_in *fromAddr){
-	
-	IMUData accel_data;
-	
-	if (listen_IMU){
-		// (!) make sure input data is in correct format
-		accel_data = data;
-	
-		// run PTE using IMU data
-		PTE_control(data, mode);
-	}
-	
-	return;
-}
-
-void reschedule_IMU(){
-	
-	cmd = 1; // (!) command number for IMU rescheduling
-	
-	// (!) Command IMU
-	PROC_cmd(proc, cmd, mode, sizeof(mode), "IMU");
-	
-}
 	
 void PTE_control(struct IMUData data, int mode)
 {
@@ -486,6 +460,30 @@ void PTE_control(struct IMUData data, int mode)
 	
 	// reschedule IMU based on mode
 	reschedule_IMU();
+	
+}
+
+void IMU_trigger(int socket, unsigned char cmd, void *data, size_t dataLen, struct sockaddr_in *fromAddr){
+	
+	struct IMUData accel_data;
+	
+	if (listen_IMU){
+		// (!) make sure input data is in correct format
+		accel_data = *data;
+	
+		// run PTE using IMU data
+		PTE_control(data, mode);
+	}
+	
+	return;
+}
+
+void reschedule_IMU(){
+	
+	int cmd = 1; // (!) command number for IMU rescheduling
+	
+	// (!) Command IMU
+	PROC_cmd(proc, cmd, &mode, sizeof(mode), "IMU");
 	
 }
 
