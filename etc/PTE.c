@@ -36,7 +36,7 @@ double window_filter(double accel[], int n, double filter[]);
 static ProcessData *proc = NULL;
 static double r_p; // Radius of periapsis (km)
 static int mode; // Flag for mode (0: safe, 1: active)
-static int pass; // Pass number	
+static int pass_act; // Pass number	
 static long double tp_err_act; // Current periapsis error
 static long double period_act; // Current orbit period
 static long double tp_cent_act; // Current centroid
@@ -173,10 +173,10 @@ void temp_correction(double time[], double accel[], double temp[], int n, double
 	int i;
 	int j;
 	long double coef[SIZE]={0};
-	long double xtx[SIZE][SIZE]={0};
+	long double xtx[SIZE][SIZE]={{0}};
 	int k;
 	long double xtx_inv[SIZE][SIZE];
-	long double inv_xt[SIZE][2*CALIBRATION_PERIOD]={0};
+	long double inv_xt[SIZE][2*CALIBRATION_PERIOD]={{0}};
 	
 	// note: this filter was designed for a cubic fit
 
@@ -417,6 +417,15 @@ long double PTE(double a_m[], double t[],  double th, double t_step, long double
 	return tp_est;
 }
 	
+void reschedule_IMU(){
+	
+	int cmd = 1; // (!) command number for IMU rescheduling
+	
+	// (!) Command IMU
+	PROC_cmd(proc, cmd, &mode, sizeof(mode), "IMU");
+	
+}
+
 void PTE_control(struct IMUData data, int mode)
 {
 	double t_step; // Time step of data (s)
@@ -469,22 +478,13 @@ void IMU_trigger(int socket, unsigned char cmd, void *data, size_t dataLen, stru
 	
 	if (listen_IMU){
 		// (!) make sure input data is in correct format
-		accel_data = *data;
+		accel_data = &data;
 	
 		// run PTE using IMU data
-		PTE_control(data, mode);
+		PTE_control(accel_data, mode);
 	}
 	
 	return;
-}
-
-void reschedule_IMU(){
-	
-	int cmd = 1; // (!) command number for IMU rescheduling
-	
-	// (!) Command IMU
-	PROC_cmd(proc, cmd, &mode, sizeof(mode), "IMU");
-	
 }
 
 static int sigint_handler(int signum, void *arg)
@@ -538,7 +538,7 @@ void status(int socket, unsigned char cmd, void *data, size_t dataLen, struct so
 	status.error = tp_err_act;
 	status.estimation = tp_est_hist[pass-1];
 	
-	PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &status, sizeof(status), src);
+	PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &status, sizeof(status), fromAddr);
 }
 
 int main(int argc, char *argv[])
