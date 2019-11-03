@@ -4,8 +4,29 @@
 #include <polysat/cmd.h>
 #include <polysat/events.h>
 #include <polysat/proclib.h>
+#include <polysat_pkt/status-structs.h>
+#include <polysat_pkt/shared-structs.h>
 #include <polysat_pkt/payload_cmd.h>
+#include <polysat_drivers/drivers/accelerometer.h>
+#include <polysat_drivers/drivers/gyroscope.h>
+#include <polysat_drivers/drivers/magnetometer.h>
 #include <polysat_drivers/driverdb.h>
+#include <polysat/polysat.h>
+#include <polysat_pkt/filemgr_cmd.h>
+#include <polysat_pkt/datalogger_cmd.h>
+#include <limits.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <time.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <signal.h>
+#include <errno.h>
+#include <ctype.h>
 
 //definitions
 #define MAX_PASS 3000
