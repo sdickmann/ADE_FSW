@@ -426,7 +426,7 @@ void reschedule_IMU(){
 	int cmd = 1; // (!) command number for IMU rescheduling
 	
 	// (!) Command IMU
-	PROC_cmd(proc, cmd, &mode, sizeof(mode), "IMU");
+	//PROC_cmd(proc, cmd, &mode, sizeof(mode), "IMU");
 	
 }
 
@@ -541,7 +541,7 @@ void status(int socket, unsigned char cmd, void *data, size_t dataLen, struct so
 	status.error = tp_err_act;
 	status.estimation = tp_est_hist[pass_act-1];
 	
-	PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &status, sizeof(status), fromAddr);
+	//PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &status, sizeof(status), fromAddr);
 }
 
 int main(int argc, char *argv[])
