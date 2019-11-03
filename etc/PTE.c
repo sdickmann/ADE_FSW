@@ -4,6 +4,8 @@
 #include <polysat/cmd.h>
 #include <polysat/events.h>
 #include <polysat/proclib.h>
+#include <polysat_pkt/payload_cmd.h>
+#include <polysat_drivers/driverdb.h>
 
 //definitions
 #define MAX_PASS 3000
@@ -541,11 +543,16 @@ void status(int socket, unsigned char cmd, void *data, size_t dataLen, struct so
 
 int main(int argc, char *argv[])
 {
+
+	memset(&proc, 0, sizeof(proc));
+
 	//initialize process
-	proc = PROC_init("PTE", WD_DISABLED); //watchdog disabled for testing
-	
+	proc = PROC_init("PTE", WD_ENABLED); //watchdog disabled for testing
+	/*if (!proc)
+		return -1;
+
 	//SIGINT Handler
-	//PROC_signal(proc, SIGINT, &sigint_handler, proc);
+	PROC_signal(proc, SIGINT, &sigint_handler, proc);
 
 	//Initialize variables in case IMU starts without starting PTE
 	r_p = 6563.1; // from launch vehicle
@@ -555,6 +562,6 @@ int main(int argc, char *argv[])
 	EVT_start_loop(PROC_evt(proc));	
 
 	//Cleanup on exit
-	PROC_cleanup(proc);
+	PROC_cleanup(proc);*/
 	return 0;
 }
