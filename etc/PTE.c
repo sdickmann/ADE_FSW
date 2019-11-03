@@ -545,7 +545,7 @@ int main(int argc, char *argv[])
 	proc = PROC_init("PTE", WD_DISABLED); //watchdog disabled for testing
 	
 	//SIGINT Handler
-	PROC_signal(proc, SIGINT, &sigint_handler, proc);
+	//PROC_signal(proc, SIGINT, &sigint_handler, proc);
 
 	//Initialize variables in case IMU starts without starting PTE
 	r_p = 6563.1; // from launch vehicle
