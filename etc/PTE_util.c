@@ -63,7 +63,7 @@ static int PTE_start(int argc, char **argv, struct MulticallInfo * self)
    }
    
    // send packet
-   if ((len = socket_send_packet_and_read_response(ip, "adcs", &send, 
+   if ((len = socket_send_packet_and_read_response(ip, "process", &send, 
     sizeof(send), NULL, 0, 0)) <= 0) {
       return len;
    } // error if less than 0
