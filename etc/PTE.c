@@ -4,29 +4,6 @@
 #include <polysat/cmd.h>
 #include <polysat/events.h>
 #include <polysat/proclib.h>
-#include <polysat_pkt/status-structs.h>
-#include <polysat_pkt/shared-structs.h>
-#include <polysat_pkt/payload_cmd.h>
-#include <polysat_drivers/drivers/accelerometer.h>
-#include <polysat_drivers/drivers/gyroscope.h>
-#include <polysat_drivers/drivers/magnetometer.h>
-#include <polysat_drivers/driverdb.h>
-#include <polysat/polysat.h>
-#include <polysat_pkt/filemgr_cmd.h>
-#include <polysat_pkt/datalogger_cmd.h>
-#include <limits.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <time.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <fcntl.h>
-#include <stdlib.h>
-#include <signal.h>
-#include <errno.h>
-#include <ctype.h>
 
 //definitions
 #define MAX_PASS 3000
@@ -47,6 +24,11 @@ struct IMUData {
 	double temp[MAX_PASS];
 };
 
+struct PTEState {
+   ProcessData *proc;
+   void *create_evt;
+};
+
 //functions
 void mat_minor(long double mat[][SIZE], long double cofac[][SIZE], int r, int c, int n);
 long double det(long double mat[][SIZE], int n);
@@ -56,7 +38,7 @@ double mean_window(double data[], int n);
 double window_filter(double accel[], int n, double filter[]);
 
 // global variables
-static ProcessData *proc = NULL;
+static struct PTEState *gState;
 static double r_p; // Radius of periapsis (km)
 static int mode; // Flag for mode (0: safe, 1: active)
 static int pass_act; // Pass number	
@@ -565,10 +547,13 @@ void status(int socket, unsigned char cmd, void *data, size_t dataLen, struct so
 int main(int argc, char *argv[])
 {
 
-	memset(&proc, 0, sizeof(proc));
-
+	struct PTEState PTE;
+	
+	memset(&PTE, 0, sizeof(PTE));
+	gState = &PTE;
+	
 	//initialize process
-	proc = PROC_init("PTE", WD_ENABLED); //watchdog disabled for testing
+	PTE.proc = PROC_init("PTE", WD_ENABLED); //watchdog disabled for testing
 	/*if (!proc)
 		return -1;
 
