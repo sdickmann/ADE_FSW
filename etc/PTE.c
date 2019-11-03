@@ -4,6 +4,29 @@
 #include <polysat/cmd.h>
 #include <polysat/events.h>
 #include <polysat/proclib.h>
+#include <polysat_pkt/status-structs.h>
+#include <polysat_pkt/shared-structs.h>
+#include <polysat_pkt/payload_cmd.h>
+#include <polysat_drivers/drivers/accelerometer.h>
+#include <polysat_drivers/drivers/gyroscope.h>
+#include <polysat_drivers/drivers/magnetometer.h>
+#include <polysat_drivers/driverdb.h>
+#include <polysat/polysat.h>
+#include <polysat_pkt/filemgr_cmd.h>
+#include <polysat_pkt/datalogger_cmd.h>
+#include <limits.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <time.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <signal.h>
+#include <errno.h>
+#include <ctype.h>
 
 //definitions
 #define MAX_PASS 3000
@@ -525,7 +548,7 @@ void active_mode(int socket, unsigned char cmd, void *data, size_t dataLen, stru
 
 void status(int socket, unsigned char cmd, void *data, size_t dataLen, struct sockaddr_in *fromAddr){
 	
-	struct PTEStatus {
+	struct PTEStatus_2 {
 		int pass;
 		double threshold;
 		long double delta_V;
@@ -533,7 +556,7 @@ void status(int socket, unsigned char cmd, void *data, size_t dataLen, struct so
 		long double estimation;
 	};
 		
-	struct PTEStatus status;
+	struct PTEStatus_2 status;
 	
 	status.pass = pass_act;
 	status.threshold = th;
