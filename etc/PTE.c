@@ -488,7 +488,7 @@ void IMU_trigger(int socket, unsigned char cmd, void *data, size_t dataLen, stru
 
 static int sigint_handler(int signum, void *arg)
 {
-   EVT_exit_loop(arg);
+   EVT_exit_loop(PROC_evt(arg));
    return EVENT_KEEP;
 }
 	
@@ -501,7 +501,16 @@ void start(int socket, unsigned char cmd, void *data, size_t dataLen, struct soc
 	
 	mode = SAFE_MODE; // safe mode on start
 	listen_IMU = 1; // accept data from IMU flag
-	printf("Started\n");
+
+	// package data for sending back	
+	struct PTEFlags {
+		int listen;
+		int  mode;
+	} flags;
+
+	flags.listen = listen_IMU;
+	flags.mode = mode;
+	PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &flags, sizeof(flags), fromAddr);
 	return;
 }
 

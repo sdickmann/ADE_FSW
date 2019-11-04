@@ -46,12 +46,19 @@ static int PTE_start(int argc, char **argv, struct MulticallInfo * self)
 {
 
    struct {
+	uint8_t cmd;
+	struct PTEFlags {
+		int listen;
+		int mode;
+	} flags;
+   } __attribute__((packed)) resp;
+
+   struct {
       uint8_t cmd;
    } __attribute__((packed)) send;
 
    send.cmd = 2;
-   const char *ip = 0;
-//   printf("%d\n", socket_get_addr_by_name("PTE")); // get IP of PTE process
+   const char *ip = "224.0.0.1";
    int len, opt;
    
    while ((opt = getopt(argc, argv, "h:")) != -1) {
@@ -62,11 +69,23 @@ static int PTE_start(int argc, char **argv, struct MulticallInfo * self)
       }
    }
    
+
    // send packet
-   if ((len = socket_send_packet_and_read_response(ip, "process", &send, 
-    sizeof(send), NULL, 0, 0)) <= 0) {
+   if ((len = socket_send_packet_and_read_response(ip, "test1", &send, 
+    sizeof(send), &resp, sizeof(resp), 2000)) <= 0) {
       return len;
    } // error if less than 0
+
+   if (resp.cmd != CMD_STATUS_RESPONSE) {
+	printf("response code incorrect, got 0x%02X expected 0x%02x\n", resp.cmd, CMD_STATUS_RESPONSE);
+	return 5;
+   }
+
+   printf("Listening status: %d\n", resp.flags.listen);
+   if (resp.flags.mode)
+	printf("PTE mode: ACTIVE_MODE\n");
+   else
+	printf("PTE mode: SAFE_MODE\n");
 
    return 0;
 }
