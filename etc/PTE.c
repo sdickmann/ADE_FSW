@@ -546,8 +546,8 @@ int main(int argc, char *argv[])
 	memset(&proc, 0, sizeof(proc));
 
 	//initialize process
-	proc = PROC_init("PTE", WD_ENABLED); //watchdog disabled for testing
-	/*if (!proc)
+	proc = PROC_init("test1", WD_ENABLED); //watchdog disabled for testing
+	if (!proc)
 		return -1;
 
 	//SIGINT Handler
@@ -561,6 +561,6 @@ int main(int argc, char *argv[])
 	EVT_start_loop(PROC_evt(proc));	
 
 	//Cleanup on exit
-	PROC_cleanup(proc);*/
+	PROC_cleanup(proc);
 	return 0;
 }

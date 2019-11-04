@@ -8,7 +8,7 @@ OBJS=$(SRC:.c=.o)
 EXECUTABLE=PTE
 CMDS=PTE_util
 INSTALL_DEST=$(BIN_PATH)
-CMD_FILE=PTE.cmd.cfg
+CMD_FILE=test1.cmd.cfg
 
 all: $(EXECUTABLE) $(CMDS)
 

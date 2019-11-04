@@ -51,7 +51,7 @@ static int PTE_start(int argc, char **argv, struct MulticallInfo * self)
 
    send.cmd = 2;
    const char *ip = 0;
-   printf("%d\n", socket_get_addr_by_name("PTE")); // get IP of PTE process
+//   printf("%d\n", socket_get_addr_by_name("PTE")); // get IP of PTE process
    int len, opt;
    
    while ((opt = getopt(argc, argv, "h:")) != -1) {
