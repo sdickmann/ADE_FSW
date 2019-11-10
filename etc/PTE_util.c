@@ -33,12 +33,14 @@ struct MulticallInfo {
    const char *opt;
    const char *help;
 } multicall[] = {
-   { &PTE_start, "PTE-start", "-I", 
+   { &PTE_start, "PTE_start", "-I", 
        "Start PTE -I" }, 
-   { &PTE_safe, "PTE-safe", "-S", 
+   { &PTE_safe, "PTE_safe", "-S", 
        "Put PTE in safe mode -S" }, 
-	{ &PTE_active, "PTE-active", "-A", 
+	{ &PTE_active, "PTE_active", "-A", 
        "PUT PTE in active mode -A" }, 
+	{ &PTE_status, "PTE_status", "-D",
+	   "Get PTE status -D" },
    { NULL, NULL, NULL, NULL }
 };
 
@@ -159,8 +161,53 @@ static int PTE_safe(int argc, char **argv, struct MulticallInfo * self)
 	
 	int cmd = 3;
    
-    send_receive(cmd, argc, &argv, self);
+    struct {
+	uint8_t cmd;
+	struct PTEStatus {
+		int pass;
+		double threshold;
+		long double delta_V;
+		long double error;
+		long double estimation;
+		int listen;
+		int mode;
+	} flags;
+    } __attribute__((packed)) resp;
+
+   struct {
+      uint8_t cmd;
+   } __attribute__((packed)) send;
+
+   send.cmd = cmd;
+   const char *ip = "224.0.0.1";
+   int len, opt;
    
+   while ((opt = getopt(argc, argv, "h:")) != -1) {
+      switch(opt) {
+         case 'h':
+            ip = optarg;
+            break;
+      }
+   }
+   
+
+   // send packet
+   if ((len = socket_send_packet_and_read_response(ip, "test1", &send, 
+    sizeof(send), &resp, sizeof(resp), 2000)) <= 0) {
+      return len;
+   } // error if less than 0
+
+   if (resp.cmd != CMD_STATUS_RESPONSE) {
+	printf("response code incorrect, got 0x%02X expected 0x%02x\n", resp.cmd, CMD_STATUS_RESPONSE);
+	return 5;
+   }
+
+   printf("Listening status: %d\n", resp.flags.listen);
+   if (resp.flags.mode)
+	printf("PTE mode: ACTIVE_MODE\n");
+   else
+	printf("PTE mode: SAFE_MODE\n");
+
    return 0;
 }
 
@@ -169,8 +216,53 @@ static int PTE_active(int argc, char **argv, struct MulticallInfo * self)
 	
 	int cmd = 4;
    
-	send_receive(cmd, argc, &argv, self);
-	
+	struct {
+	uint8_t cmd;
+	struct PTEStatus {
+		int pass;
+		double threshold;
+		long double delta_V;
+		long double error;
+		long double estimation;
+		int listen;
+		int mode;
+	} flags;
+    } __attribute__((packed)) resp;
+
+   struct {
+      uint8_t cmd;
+   } __attribute__((packed)) send;
+
+   send.cmd = cmd;
+   const char *ip = "224.0.0.1";
+   int len, opt;
+   
+   while ((opt = getopt(argc, argv, "h:")) != -1) {
+      switch(opt) {
+         case 'h':
+            ip = optarg;
+            break;
+      }
+   }
+   
+
+   // send packet
+   if ((len = socket_send_packet_and_read_response(ip, "test1", &send, 
+    sizeof(send), &resp, sizeof(resp), 2000)) <= 0) {
+      return len;
+   } // error if less than 0
+
+   if (resp.cmd != CMD_STATUS_RESPONSE) {
+	printf("response code incorrect, got 0x%02X expected 0x%02x\n", resp.cmd, CMD_STATUS_RESPONSE);
+	return 5;
+   }
+
+   printf("Listening status: %d\n", resp.flags.listen);
+   if (resp.flags.mode)
+	printf("PTE mode: ACTIVE_MODE\n");
+   else
+	printf("PTE mode: SAFE_MODE\n");
+
    return 0;
 }
 
@@ -179,8 +271,53 @@ static int PTE_status(int argc, char **argv, struct MulticallInfo * self)
 	
 	int cmd = 1;
    
-	send_receive(cmd, argc, &argv, self);
-  
+	struct {
+	uint8_t cmd;
+	struct PTEStatus {
+		int pass;
+		double threshold;
+		long double delta_V;
+		long double error;
+		long double estimation;
+		int listen;
+		int mode;
+	} flags;
+    } __attribute__((packed)) resp;
+
+   struct {
+      uint8_t cmd;
+   } __attribute__((packed)) send;
+
+   send.cmd = cmd;
+   const char *ip = "224.0.0.1";
+   int len, opt;
+   
+   while ((opt = getopt(argc, argv, "h:")) != -1) {
+      switch(opt) {
+         case 'h':
+            ip = optarg;
+            break;
+      }
+   }
+   
+
+   // send packet
+   if ((len = socket_send_packet_and_read_response(ip, "test1", &send, 
+    sizeof(send), &resp, sizeof(resp), 2000)) <= 0) {
+      return len;
+   } // error if less than 0
+
+   if (resp.cmd != CMD_STATUS_RESPONSE) {
+	printf("response code incorrect, got 0x%02X expected 0x%02x\n", resp.cmd, CMD_STATUS_RESPONSE);
+	return 5;
+   }
+
+   printf("Listening status: %d\n", resp.flags.listen);
+   if (resp.flags.mode)
+	printf("PTE mode: ACTIVE_MODE\n");
+   else
+	printf("PTE mode: SAFE_MODE\n");
+
    return 0;
 }
 // prints out available commands for this util
