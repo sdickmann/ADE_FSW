@@ -529,7 +529,27 @@ void start(int socket, unsigned char cmd, void *data, size_t dataLen, struct soc
 	listen_IMU = 1; // accept data from IMU flag
 
 	// package data for sending back response while debugging
-	status(socket, cmd, &data, dataLen, &fromAddr);
+	struct PTEStatus {
+		int pass;
+		double threshold;
+		long double delta_V;
+		long double error;
+		long double estimation;
+		int listen;
+		int mode;
+	};
+		
+	struct PTEStatus status;
+	
+	status.pass = pass_act;
+	status.threshold = th;
+	status.delta_V = dV;
+	status.error = tp_err_act;
+	status.estimation = tp_est_hist[pass_act-1];
+	status.listen = listen_IMU;
+	status.mode = mode;
+	
+	PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &status, sizeof(status), fromAddr);
 	
 	return;
 }
