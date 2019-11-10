@@ -535,12 +535,7 @@ void start(int socket, unsigned char cmd, void *data, size_t dataLen, struct soc
 	};
 		
 	struct PTEStatus status;
-	
-	status.pass = pass_act;
-	status.threshold = th;
-	status.delta_V = dV;
-	status.error = tp_err_act;
-	status.estimation = tp_est_hist[pass_act-1];
+
 	status.listen = listen_IMU;
 	status.mode = mode;
 	
@@ -560,12 +555,7 @@ void safe_mode(int socket, unsigned char cmd, void *data, size_t dataLen, struct
 	};
 		
 	struct PTEStatus status;
-	
-	status.pass = pass_act;
-	status.threshold = th;
-	status.delta_V = dV;
-	status.error = tp_err_act;
-	status.estimation = tp_est_hist[pass_act-1];
+
 	status.listen = listen_IMU;
 	status.mode = mode;
 	
@@ -585,12 +575,7 @@ void active_mode(int socket, unsigned char cmd, void *data, size_t dataLen, stru
 	};
 		
 	struct PTEStatus status;
-	
-	status.pass = pass_act;
-	status.threshold = th;
-	status.delta_V = dV;
-	status.error = tp_err_act;
-	status.estimation = tp_est_hist[pass_act-1];
+
 	status.listen = listen_IMU;
 	status.mode = mode;
 	
