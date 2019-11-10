@@ -502,15 +502,9 @@ void start(int socket, unsigned char cmd, void *data, size_t dataLen, struct soc
 	mode = SAFE_MODE; // safe mode on start
 	listen_IMU = 1; // accept data from IMU flag
 
-	// package data for sending back	
-	struct PTEFlags {
-		int listen;
-		int  mode;
-	} flags;
-
-	flags.listen = listen_IMU;
-	flags.mode = mode;
-	PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &flags, sizeof(flags), fromAddr);
+	// package data for sending back response while debugging
+	status(int socket, unsigned char cmd, void *data, size_t dataLen, struct sockaddr_in *fromAddr);
+	
 	return;
 }
 
@@ -518,12 +512,18 @@ void safe_mode(int socket, unsigned char cmd, void *data, size_t dataLen, struct
 
 	mode = SAFE_MODE; // switch mode
 	
+	// package data for sending back response while debugging
+	status(int socket, unsigned char cmd, void *data, size_t dataLen, struct sockaddr_in *fromAddr);
+	
 	return;	
 }
 
 void active_mode(int socket, unsigned char cmd, void *data, size_t dataLen, struct sockaddr_in *fromAddr){
 	
 	mode = ACTIVE_MODE; // switch mode
+	
+	// package data for sending back response while debugging
+	status(int socket, unsigned char cmd, void *data, size_t dataLen, struct sockaddr_in *fromAddr);
 	
 	return;
 }
@@ -536,6 +536,8 @@ void status(int socket, unsigned char cmd, void *data, size_t dataLen, struct so
 		long double delta_V;
 		long double error;
 		long double estimation;
+		int listen;
+		int mode;
 	};
 		
 	struct PTEStatus status;
@@ -545,8 +547,11 @@ void status(int socket, unsigned char cmd, void *data, size_t dataLen, struct so
 	status.delta_V = dV;
 	status.error = tp_err_act;
 	status.estimation = tp_est_hist[pass_act-1];
+	status.listen = listen_IMU;
+	status.mode = mode;
 	
 	PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &status, sizeof(status), fromAddr);
+	return;
 }
 
 int main(int argc, char *argv[])

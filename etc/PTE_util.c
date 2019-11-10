@@ -42,22 +42,26 @@ struct MulticallInfo {
    { NULL, NULL, NULL, NULL }
 };
 
-static int PTE_start(int argc, char **argv, struct MulticallInfo * self) 
+static int send_receive(int cmd, int argc, char **argv, struct MulticallInfo * self)
 {
-
-   struct {
+	struct {
 	uint8_t cmd;
-	struct PTEFlags {
+	struct PTEStatus {
+		int pass;
+		double threshold;
+		long double delta_V;
+		long double error;
+		long double estimation;
 		int listen;
 		int mode;
 	} flags;
-   } __attribute__((packed)) resp;
+    } __attribute__((packed)) resp;
 
    struct {
       uint8_t cmd;
    } __attribute__((packed)) send;
 
-   send.cmd = 2;
+   send.cmd = cmd;
    const char *ip = "224.0.0.1";
    int len, opt;
    
@@ -87,6 +91,16 @@ static int PTE_start(int argc, char **argv, struct MulticallInfo * self)
    else
 	printf("PTE mode: SAFE_MODE\n");
 
+	return 0;
+}
+
+static int PTE_start(int argc, char **argv, struct MulticallInfo * self) 
+{
+
+   int cmd = 2;
+   
+   send_receive(int cmd, int argc, char **argv, struct MulticallInfo * self);
+   
    return 0;
 }
 
@@ -97,14 +111,33 @@ static int PTE_start(int argc, char **argv, struct MulticallInfo * self)
  */
 static int PTE_safe(int argc, char **argv, struct MulticallInfo * self) 
 {
+	
+	int cmd = 3;
+   
+    send_receive(int cmd, int argc, char **argv, struct MulticallInfo * self);
+   
    return 0;
 }
 
 static int PTE_active(int argc, char **argv, struct MulticallInfo * self) 
 {
+	
+	int cmd = 4;
+   
+    send_receive(int cmd, int argc, char **argv, struct MulticallInfo * self);
+   
    return 0;
 }
 
+static int PTE_status(int argc, char **argv, struct MulticallInfo * self) 
+{
+	
+	int cmd = 1;
+   
+    send_receive(int cmd, int argc, char **argv, struct MulticallInfo * self);
+   
+   return 0;
+}
 // prints out available commands for this util
 static int print_usage(const char *name)
 {
