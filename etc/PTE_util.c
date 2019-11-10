@@ -99,8 +99,8 @@ static int PTE_start(int argc, char **argv, struct MulticallInfo * self)
 
    int cmd = 2;
    
-   send_receive(int cmd, int argc, char **argv, struct MulticallInfo * self);
-   
+	send_receive(cmd, argc, **argv, self);  
+	
    return 0;
 }
 
@@ -114,7 +114,7 @@ static int PTE_safe(int argc, char **argv, struct MulticallInfo * self)
 	
 	int cmd = 3;
    
-    send_receive(int cmd, int argc, char **argv, struct MulticallInfo * self);
+    send_receive(cmd, argc, **argv, self);
    
    return 0;
 }
@@ -124,8 +124,8 @@ static int PTE_active(int argc, char **argv, struct MulticallInfo * self)
 	
 	int cmd = 4;
    
-    send_receive(int cmd, int argc, char **argv, struct MulticallInfo * self);
-   
+	send_receive(cmd, argc, **argv, self);
+	
    return 0;
 }
 
@@ -134,8 +134,8 @@ static int PTE_status(int argc, char **argv, struct MulticallInfo * self)
 	
 	int cmd = 1;
    
-    send_receive(int cmd, int argc, char **argv, struct MulticallInfo * self);
-   
+	send_receive(cmd, argc, **argv, self);
+  
    return 0;
 }
 // prints out available commands for this util
