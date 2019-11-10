@@ -47,8 +47,8 @@ struct MulticallInfo {
 
 static int PTE_start(int argc, char **argv, struct MulticallInfo * self) 
 {
-
-   int cmd = 2;
+	
+	int cmd = 2;
    
 	struct {
 	uint8_t cmd;
@@ -96,7 +96,7 @@ static int PTE_start(int argc, char **argv, struct MulticallInfo * self)
 	printf("PTE mode: ACTIVE_MODE\n");
    else
 	printf("PTE mode: SAFE_MODE\n");
-	
+
    return 0;
 }
 
@@ -110,7 +110,7 @@ static int PTE_safe(int argc, char **argv, struct MulticallInfo * self)
 	
 	int cmd = 3;
    
-    struct {
+	struct {
 	uint8_t cmd;
 	struct PTEStatus {
 		int pass;
@@ -269,6 +269,7 @@ static int PTE_status(int argc, char **argv, struct MulticallInfo * self)
 
    return 0;
 }
+
 // prints out available commands for this util
 static int print_usage(const char *name)
 {
