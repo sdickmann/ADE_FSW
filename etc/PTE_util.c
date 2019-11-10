@@ -53,11 +53,6 @@ static int PTE_start(int argc, char **argv, struct MulticallInfo * self)
 	struct {
 	uint8_t cmd;
 	struct PTEStatus {
-		int pass;
-		double threshold;
-		long double delta_V;
-		long double error;
-		long double estimation;
 		int listen;
 		int mode;
 	} flags;
@@ -113,11 +108,6 @@ static int PTE_safe(int argc, char **argv, struct MulticallInfo * self)
 	struct {
 	uint8_t cmd;
 	struct PTEStatus {
-		int pass;
-		double threshold;
-		long double delta_V;
-		long double error;
-		long double estimation;
 		int listen;
 		int mode;
 	} flags;
@@ -168,11 +158,6 @@ static int PTE_active(int argc, char **argv, struct MulticallInfo * self)
 	struct {
 	uint8_t cmd;
 	struct PTEStatus {
-		int pass;
-		double threshold;
-		long double delta_V;
-		long double error;
-		long double estimation;
 		int listen;
 		int mode;
 	} flags;
@@ -266,6 +251,10 @@ static int PTE_status(int argc, char **argv, struct MulticallInfo * self)
 	printf("PTE mode: ACTIVE_MODE\n");
    else
 	printf("PTE mode: SAFE_MODE\n");
+	printf("Pass #: %d\n", flags.pass);
+	printf("Threshold: %lf\n", flags.threshold);
+	printf("DeltaV: %Lf\n", flags.delta_V);
+	printf("PTE: %Lf\n", flags.estimation);
 
    return 0;
 }

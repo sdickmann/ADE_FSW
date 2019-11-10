@@ -530,11 +530,6 @@ void start(int socket, unsigned char cmd, void *data, size_t dataLen, struct soc
 
 	// package data for sending back response while debugging
 	struct PTEStatus {
-		int pass;
-		double threshold;
-		long double delta_V;
-		long double error;
-		long double estimation;
 		int listen;
 		int mode;
 	};
@@ -560,11 +555,6 @@ void safe_mode(int socket, unsigned char cmd, void *data, size_t dataLen, struct
 	
 	// package data for sending back response while debugging
 	struct PTEStatus {
-		int pass;
-		double threshold;
-		long double delta_V;
-		long double error;
-		long double estimation;
 		int listen;
 		int mode;
 	};
@@ -590,11 +580,6 @@ void active_mode(int socket, unsigned char cmd, void *data, size_t dataLen, stru
 	
 	// package data for sending back response while debugging
 	struct PTEStatus {
-		int pass;
-		double threshold;
-		long double delta_V;
-		long double error;
-		long double estimation;
 		int listen;
 		int mode;
 	};
