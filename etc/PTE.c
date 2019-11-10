@@ -491,7 +491,33 @@ static int sigint_handler(int signum, void *arg)
    EVT_exit_loop(PROC_evt(arg));
    return EVENT_KEEP;
 }
+
+void status(int socket, unsigned char cmd, void *data, size_t dataLen, struct sockaddr_in *fromAddr){
 	
+	struct PTEStatus {
+		int pass;
+		double threshold;
+		long double delta_V;
+		long double error;
+		long double estimation;
+		int listen;
+		int mode;
+	};
+		
+	struct PTEStatus status;
+	
+	status.pass = pass_act;
+	status.threshold = th;
+	status.delta_V = dV;
+	status.error = tp_err_act;
+	status.estimation = tp_est_hist[pass_act-1];
+	status.listen = listen_IMU;
+	status.mode = mode;
+	
+	PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &status, sizeof(status), fromAddr);
+	return;
+}
+
 void start(int socket, unsigned char cmd, void *data, size_t dataLen, struct sockaddr_in *fromAddr){
 	// (!) read R_p from somewhere
 	//if (R_p uplinked)
@@ -525,32 +551,6 @@ void active_mode(int socket, unsigned char cmd, void *data, size_t dataLen, stru
 	// package data for sending back response while debugging
 	status(int socket, unsigned char cmd, void *data, size_t dataLen, struct sockaddr_in *fromAddr);
 	
-	return;
-}
-
-void status(int socket, unsigned char cmd, void *data, size_t dataLen, struct sockaddr_in *fromAddr){
-	
-	struct PTEStatus {
-		int pass;
-		double threshold;
-		long double delta_V;
-		long double error;
-		long double estimation;
-		int listen;
-		int mode;
-	};
-		
-	struct PTEStatus status;
-	
-	status.pass = pass_act;
-	status.threshold = th;
-	status.delta_V = dV;
-	status.error = tp_err_act;
-	status.estimation = tp_est_hist[pass_act-1];
-	status.listen = listen_IMU;
-	status.mode = mode;
-	
-	PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &status, sizeof(status), fromAddr);
 	return;
 }
 
