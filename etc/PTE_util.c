@@ -251,10 +251,10 @@ static int PTE_status(int argc, char **argv, struct MulticallInfo * self)
 	printf("PTE mode: ACTIVE_MODE\n");
    else
 	printf("PTE mode: SAFE_MODE\n");
-	printf("Pass #: %d\n", flags.pass);
-	printf("Threshold: %lf\n", flags.threshold);
-	printf("DeltaV: %Lf\n", flags.delta_V);
-	printf("PTE: %Lf\n", flags.estimation);
+	printf("Pass #: %d\n", resp.flags.pass);
+	printf("Threshold: %lf\n", resp.lags.threshold);
+	printf("DeltaV: %Lf\n", resp.flags.delta_V);
+	printf("PTE: %Lf\n", resp.flags.estimation);
 
    return 0;
 }
