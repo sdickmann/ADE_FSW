@@ -66,7 +66,10 @@ static int IMU_trigger(int argc, char **argv, struct MulticallInfo * self)
    
 	struct {
 		uint8_t cmd;
-		double resp_data;
+		struct {
+			double resp_altered;
+			int listen;
+		} resp_data;
     } __attribute__((packed)) resp;
 
    struct {
@@ -99,7 +102,7 @@ static int IMU_trigger(int argc, char **argv, struct MulticallInfo * self)
 	return 5;
    }
 
-   printf("Sent: %lf Received: %lf Should be: %lf\n", send.send_data, resp.resp_data, send.send_data + 1);
+   printf("Sent: %lf Received: %lf Should be: %lf\n", send.send_data, resp.resp_data.resp_altered, send.send_data + 1 - 2*!resp.resp_data.listen);
    
    return 0;
 }
