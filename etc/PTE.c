@@ -478,7 +478,6 @@ void IMU_trigger(int socket, unsigned char cmd, void *data, size_t dataLen, stru
 	
 	if (listen_IMU){
 		// (!) make sure input data is in correct format
-		printf("%d\n", listen_IMU);
 		point = (struct IMUData*)data;
 		accel_data = *point;
 		accel_data.t[0] = 1;
