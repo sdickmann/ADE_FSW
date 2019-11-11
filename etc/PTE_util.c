@@ -61,7 +61,7 @@ struct IMUData {
 static int IMU_trigger(int argc, char **argv, struct MulticallInfo * self) 
 {
 	
-	int cmd = 5;
+	int cmd = 4;
    
 	struct {
 	uint8_t cmd;
