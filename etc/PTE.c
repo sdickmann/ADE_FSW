@@ -474,10 +474,12 @@ void PTE_control(struct IMUData data, int mode)
 void IMU_trigger(int socket, unsigned char cmd, void *data, size_t dataLen, struct sockaddr_in *fromAddr){
 	
 	struct IMUData accel_data;
+	struct IMUData *point;
 	
 	if (listen_IMU){
 		// (!) make sure input data is in correct format
-		accel_data = *data;
+		//point = (struct IMUData*)data;
+		//accel_data = *point;
 		accel_data.t[0] = 1;
 		accel_data.x[0] = 2;
 		accel_data.y[0] = 3;

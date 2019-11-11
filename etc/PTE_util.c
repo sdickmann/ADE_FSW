@@ -45,6 +45,8 @@ struct MulticallInfo {
        "PUT PTE in active mode -A" }, 
 	{ &PTE_status, "PTE_status", "-D",
 	   "Get PTE status -D" },
+	{ &IMU_trigger, "IMU_trigger", "-T",
+	   "Mock data from IMU -T"},
    { NULL, NULL, NULL, NULL }
 };
 
@@ -96,7 +98,7 @@ static int IMU_trigger(int argc, char **argv, struct MulticallInfo * self)
    }
 
     printf("Sent data: t[0]: %lf x[0]: %lf y[0]: %lf z[0]: %lf temp[0]: %lf\n", send.send_data.t, send.send_data.x, send.send_data.y, send.send_data.z, send.send_data.temp); 
-	printf("Received data: t[0]: %lf x[0]: %lf y[0]: %lf z[0]: %lf temp[0]: %lf\n", resp.resp_data.t, resp.resp_data.x, resp.resp_data.y, resp.resp_data.z, resp.resp_data.temp); 
+	printf("Received data: t[0]: %lf x[0]: %lf y[0]: %lf z[0]: %lf temp[0]: %lf\n", (*resp).resp_data.t, (*resp).resp_data.x, (*resp).resp_data.y, (*resp).resp_data.z, (*resp).resp_data.temp); 
 
    return 0;
 }
