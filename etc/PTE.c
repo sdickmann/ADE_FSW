@@ -475,10 +475,12 @@ void IMU_trigger(int socket, unsigned char cmd, void *data, size_t dataLen, stru
 	
 	struct IMUData accel_data;
 	double *point;
-	struct {
+	struct RespData {
 		double resp_altered;
 		int listen;
-	} resp;
+	};
+	
+	struct RespData resp;
 	
 	if (listen_IMU){
 		// (!) make sure input data is in correct format

@@ -64,9 +64,14 @@ static int IMU_trigger(int argc, char **argv, struct MulticallInfo * self)
 	
 	int cmd = 5;
    
+   struct RespData {
+		double resp_altered;
+		int listen;
+	};
+	
 	struct {
 		uint8_t cmd;
-		struct {
+		struct RespData {
 			double resp_altered;
 			int listen;
 		} resp_data;
