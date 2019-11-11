@@ -28,6 +28,7 @@ static int PTE_safe(int, char**, struct MulticallInfo *);
 static int PTE_active(int, char**, struct MulticallInfo *);
 static int PTE_status(int, char**, struct MulticallInfo *);
 static int IMU_trigger(int, char**, struct MulticallInfo *);
+
 // struct holding all possible function calls
 // running the executable with the - flags will call that function
 // running without flags will print out this struct
@@ -61,7 +62,7 @@ struct IMUData {
 static int IMU_trigger(int argc, char **argv, struct MulticallInfo * self) 
 {
 	
-	int cmd = 4;
+	int cmd = 5;
    
 	struct {
 	uint8_t cmd;
@@ -70,7 +71,7 @@ static int IMU_trigger(int argc, char **argv, struct MulticallInfo * self)
 
    struct {
       uint8_t cmd;
-	  struct IMUData send_data;
+	  //struct IMUData send_data;
    } __attribute__((packed)) send;
 
    send.cmd = cmd;
