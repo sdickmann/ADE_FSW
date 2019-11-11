@@ -474,24 +474,22 @@ void PTE_control(struct IMUData data, int mode)
 void IMU_trigger(int socket, unsigned char cmd, void *data, size_t dataLen, struct sockaddr_in *fromAddr){
 	
 	struct IMUData accel_data;
-	struct IMUData *point;
+	double *point;
+	double resp_data;
 	
 	if (listen_IMU){
 		// (!) make sure input data is in correct format
-		point = (struct IMUData*)data;
-		accel_data = *point;
-		accel_data.t[0] = 1;
-		accel_data.x[0] = 2;
-		accel_data.y[0] = 3;
-		accel_data.z[0] = 4;
-		accel_data.temp[0] = 5;
+		// import data
+		point = (double*)data;
+		resp_data = *point;
+		resp_data = 2;
 	
 		// run PTE using IMU data
 		//PTE_control(accel_data, mode);
 		
-		PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &accel_data, sizeof(accel_data), fromAddr);
+		PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &resp_data, sizeof(resp_data), fromAddr);
 	} else
-		PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &accel_data, sizeof(accel_data), fromAddr);
+		PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &resp_data, sizeof(resp_data), fromAddr);
 	
 	return;
 }
