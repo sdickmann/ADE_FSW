@@ -99,7 +99,7 @@ static int IMU_trigger(int argc, char **argv, struct MulticallInfo * self)
 	return 5;
    }
 
-   printf("Sent: %lf Received: %lf\n", send.send_data, resp.resp_data);
+   printf("Sent: %lf Received: %lf Should be: %lf\n", send.send_data, resp.resp_data, send.send_data + 1);
    
    return 0;
 }
