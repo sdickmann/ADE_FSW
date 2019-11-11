@@ -18,13 +18,16 @@
 #include <errno.h>
 #include <ctype.h>
 
+#define MAX_PASS 3000
+
 struct MulticallInfo;
+struct IMUData;
 
 static int PTE_start(int, char**, struct MulticallInfo *);
 static int PTE_safe(int, char**, struct MulticallInfo *);
 static int PTE_active(int, char**, struct MulticallInfo *);
 static int PTE_status(int, char**, struct MulticallInfo *);
-
+static int IMU_trigger(int, char**, struct MulticallInfo *);
 // struct holding all possible function calls
 // running the executable with the - flags will call that function
 // running without flags will print out this struct
@@ -44,6 +47,59 @@ struct MulticallInfo {
 	   "Get PTE status -D" },
    { NULL, NULL, NULL, NULL }
 };
+
+struct IMUData {
+	double t[MAX_PASS];
+	double x[MAX_PASS];
+	double y[MAX_PASS];
+	double z[MAX_PASS];
+	double temp[MAX_PASS];
+};
+
+static int IMU_trigger(int argc, char **argv, struct MulticallInfo * self) 
+{
+	
+	int cmd = 6;
+   
+	struct {
+	uint8_t cmd;
+	struct IMUData resp_data;
+    } __attribute__((packed)) resp;
+
+   struct {
+      uint8_t cmd;
+	  struct IMUData send_data;
+   } __attribute__((packed)) send;
+
+   send.cmd = cmd;
+   const char *ip = "224.0.0.1";
+   int len, opt;
+   
+   while ((opt = getopt(argc, argv, "h:")) != -1) {
+      switch(opt) {
+         case 'h':
+            ip = optarg;
+            break;
+      }
+   }
+   
+
+   // send packet
+   if ((len = socket_send_packet_and_read_response(ip, "test1", &send, 
+    sizeof(send), &resp, sizeof(resp), 2000)) <= 0) {
+      return len;
+   } // error if less than 0
+
+   if (resp.cmd != CMD_STATUS_RESPONSE) {
+	printf("response code incorrect, got 0x%02X expected 0x%02x\n", resp.cmd, CMD_STATUS_RESPONSE);
+	return 5;
+   }
+
+    printf("Sent data: t[0]: %lf x[0]: %lf y[0]: %lf z[0]: %lf temp[0]: %lf\n", send.send_data.t, send.send_data.x, send.send_data.y, send.send_data.z, send.send_data.temp); 
+	printf("Received data: t[0]: %lf x[0]: %lf y[0]: %lf z[0]: %lf temp[0]: %lf\n", resp.resp_data.t, resp.resp_data.x, resp.resp_data.y, resp.resp_data.z, resp.resp_data.temp); 
+
+   return 0;
+}
 
 static int PTE_start(int argc, char **argv, struct MulticallInfo * self) 
 {
