@@ -1,40 +1,39 @@
-//headers
+// headers
 #include <math.h>
 #include <polysat/polysat.h>
 #include <polysat/cmd.h>
 #include <polysat/events.h>
 #include <polysat/proclib.h>
 
-
-//definitions
+// definitions
 #define MAX_PASS 3000
-#define T_STEP 1 //nominal time step
+#define T_STEP 1 // nominal time step
 #define PTE_CYCLE 1500
 #define SIZE 4 //(n+1) order of temp correction
-#define WINDOW 120 //size of window filter
-#define CALIBRATION_PERIOD 150 //size of calibration period, seconds
-#define SAFE_MODE 0
-#define ACTIVE_MODE 1
+#define WINDOW 120 // size of window filter
+#define CALIBRATION_PERIOD 150 // size of calibration period, seconds
+#define SAFE_MODE 0 // safe mode flag
+#define ACTIVE_MODE 1 // active mode flag
 
-//structures
+// structures
 struct IMUData {
 	double t[MAX_PASS];
 	double x[MAX_PASS];
 	double y[MAX_PASS];
 	double z[MAX_PASS];
 	double temp[MAX_PASS];
-};
+}; // struct to hold data from IMU
 
-//functions
-void mat_minor(long double mat[][SIZE], long double cofac[][SIZE], int r, int c, int n);
-long double det(long double mat[][SIZE], int n);
-int inv(long double mat[][SIZE], long double mat_inv[][SIZE], int n);
-void temp_correction(double time[], double accel[], double temp[], int n, double filtered[]);
-double mean_window(double data[], int n);
-double window_filter(double accel[], int n, double filter[]);
+// function declarations
+void mat_minor(long double mat[][SIZE], long double cofac[][SIZE], int r, int c, int n); // calculate minor of matrix
+long double det(long double mat[][SIZE], int n); // calculate determinant of matrix
+int inv(long double mat[][SIZE], long double mat_inv[][SIZE], int n); // calculate inverse of matrix
+void temp_correction(double time[], double accel[], double temp[], int n, double filtered[]); // temperature correction function
+double mean_window(double data[], int n); // calculate mean of window for window filter
+double window_filter(double accel[], int n, double filter[]); // window filter function for processing data
 
 // global variables
-static ProcessData *proc = NULL;
+static ProcessData *proc = NULL; // process data
 static double r_p; // Radius of periapsis (km)
 static int mode; // Flag for mode (0: safe, 1: active)
 static int pass_act; // Pass number	
@@ -178,7 +177,7 @@ void temp_correction(double time[], double accel[], double temp[], int n, double
 	long double xtx_inv[SIZE][SIZE];
 	long double inv_xt[SIZE][2*CALIBRATION_PERIOD]={{0}};
 	
-	// note: this filter was designed for a cubic fit
+	// note: this filter was designed and tested for a cubic fit
 
 	for (i=0;i<CALIBRATION_PERIOD;i++){
 		X[i][0] = pow(temp[i], 3);
@@ -447,6 +446,9 @@ void PTE_control(struct IMUData data, int mode)
 	tp_cent = &tp_cent_act;
 	
 	// (!) Read latest data
+	// DEV ITEM: Need to make sure this data persists in between runs
+	// DEV ITEM: Decide where radius of periapsis is stored
+	// DEV ITEM: Write function to read radius of periapsis
 	tp_prev = tp_hist[*pass-1];
 	tp_est_prev = tp_est_hist[*pass-1];
 	//r_p = read_r_p();
@@ -459,11 +461,14 @@ void PTE_control(struct IMUData data, int mode)
 	tp_est = PTE(a_m, t, th, t_step, tp_err, pass, period, tp_cent, tp_prev, tp_est_prev, r_p, array_size);
 
 	// (!) Store pass centroids and time estimations so they can be read again
+	// DEV ITEM: Need to make sure this data persists in between runs
 	tp_hist[*pass-1] = tp_cent_act;
 	tp_est_hist[*pass-1] = tp_est;
 	tp_err_hist[*pass-1] = tp_err_act;
 	
 	// (!) write to PTT
+	// DEV ITEM: Figure out form of Periapsis Time Table
+	// DEV ITEM: Write function to write to PTT
 	//PTT_write(tp_est);
 	
 	// reschedule IMU based on mode
@@ -484,6 +489,9 @@ void IMU_trigger(int socket, unsigned char cmd, void *data, size_t dataLen, stru
 	
 	if (listen_IMU){
 		// (!) make sure input data is in correct format
+		// DEV ITEM: Figure out best way to send data (UDP packet may be too small)
+		// DEV ITEM: Write code to transfer data
+		
 		// import data
 		point = (double*)data;
 		resp.resp_altered = *point + 1;
@@ -527,6 +535,8 @@ void status(int socket, unsigned char cmd, void *data, size_t dataLen, struct so
 	status.listen = listen_IMU;
 	status.mode = mode;
 	
+	// Debugging:
+	// Send back to debug util
 	PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &status, sizeof(status), fromAddr);
 	
 	return;
@@ -534,6 +544,9 @@ void status(int socket, unsigned char cmd, void *data, size_t dataLen, struct so
 
 void start(int socket, unsigned char cmd, void *data, size_t dataLen, struct sockaddr_in *fromAddr){
 	// (!) read R_p from somewhere
+	// DEV ITEM: Decide where radius of periapsis is stored
+	// DEV ITEM: Write function to read radius of periapsis
+	// DEV ITEM: Figure out flag to indicate that a radius of periapsis has been uplinked
 	//if (R_p uplinked)
 		//r_p = read_r_p();
 	//else
@@ -542,6 +555,7 @@ void start(int socket, unsigned char cmd, void *data, size_t dataLen, struct soc
 	mode = SAFE_MODE; // safe mode on start
 	listen_IMU = 1; // accept data from IMU flag
 
+	// Debugging:
 	// package data for sending back response while debugging
 	struct PTEStatus {
 		int listen;
@@ -553,7 +567,9 @@ void start(int socket, unsigned char cmd, void *data, size_t dataLen, struct soc
 	status.listen = listen_IMU;
 	status.mode = mode;
 	
+	// Send back to debug util
 	PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &status, sizeof(status), fromAddr);
+	// End debug code
 	
 	return;
 }
@@ -562,6 +578,7 @@ void safe_mode(int socket, unsigned char cmd, void *data, size_t dataLen, struct
 
 	mode = SAFE_MODE; // switch mode
 	
+	// Debugging:
 	// package data for sending back response while debugging
 	struct PTEStatus {
 		int listen;
@@ -573,7 +590,9 @@ void safe_mode(int socket, unsigned char cmd, void *data, size_t dataLen, struct
 	status.listen = listen_IMU;
 	status.mode = mode;
 	
+	// Send back to debug util
 	PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &status, sizeof(status), fromAddr);
+	// End debug code
 	
 	return;	
 }
@@ -582,6 +601,7 @@ void active_mode(int socket, unsigned char cmd, void *data, size_t dataLen, stru
 	
 	mode = ACTIVE_MODE; // switch mode
 	
+	// Debugging:
 	// package data for sending back response while debugging
 	struct PTEStatus {
 		int listen;
@@ -593,14 +613,15 @@ void active_mode(int socket, unsigned char cmd, void *data, size_t dataLen, stru
 	status.listen = listen_IMU;
 	status.mode = mode;
 	
+	// Send back to debug util
 	PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &status, sizeof(status), fromAddr);
+	// End debug code
 	
 	return;
 }
 
 int main(int argc, char *argv[])
 {
-
 	memset(&proc, 0, sizeof(proc));
 
 	//initialize process
@@ -615,7 +636,7 @@ int main(int argc, char *argv[])
 	r_p = 6563.1; // from launch vehicle
 	mode = SAFE_MODE; // default to safe mode
 	
-	//Start main event loop (idk what this does)
+	//Start main event loop
 	EVT_start_loop(PROC_evt(proc));	
 
 	//Cleanup on exit
