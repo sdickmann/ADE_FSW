@@ -487,7 +487,8 @@ void IMU_trigger(int socket, unsigned char cmd, void *data, size_t dataLen, stru
 		int listen;
 	};
 	
-	struct IMUData resp;
+	int resp = 0;
+	//struct IMUData resp;
 	
 	if (listen_IMU){
 		// (!) make sure input data is in correct format
@@ -503,6 +504,8 @@ void IMU_trigger(int socket, unsigned char cmd, void *data, size_t dataLen, stru
 		
 		// run PTE using IMU data
 		//PTE_control(accel_data, mode);
+		
+		resp = 1;
 		
 		PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &resp, sizeof(resp), fromAddr);
 	} else 
