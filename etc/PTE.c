@@ -592,7 +592,7 @@ void passive_mode(int socket, unsigned char cmd, void *data, size_t dataLen, str
 		
 	struct PTEStatus status;
 
-	status.listen = listen_IMU;
+	status.listen = 3; //listen_IMU;
 	status.mode = mode;
 	
 	// Send back to debug util
