@@ -18,7 +18,7 @@
 #include <errno.h>
 #include <ctype.h>
 
-#define MAX_PASS 1800
+#define MAX_PASS 1500
 
 struct MulticallInfo;
 struct IMUData;
