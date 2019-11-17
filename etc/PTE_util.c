@@ -81,10 +81,6 @@ static int IMU_trigger(int argc, char **argv, struct MulticallInfo * self)
       uint8_t cmd;
 	  struct IMUData {
 			double t[MAX_PASS];
-			double x[MAX_PASS];
-			double y[MAX_PASS];
-			double z[MAX_PASS];
-			double temp[MAX_PASS];
 		} send_data;
    } __attribute__((packed)) send;
 
