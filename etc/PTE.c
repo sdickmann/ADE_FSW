@@ -447,7 +447,6 @@ void PTE_control(struct IMUData data, int mode)
 	tp_cent = &tp_cent_act;
 	
 	// (!) Read latest data
-	// DEV ITEM: Need to make sure this data persists in between runs
 	// DEV ITEM: Decide where radius of periapsis is stored
 	// DEV ITEM: Write function to read radius of periapsis
 	tp_prev = tp_hist[*pass-1];
@@ -461,14 +460,12 @@ void PTE_control(struct IMUData data, int mode)
 	
 	tp_est = PTE(a_m, t, th, t_step, tp_err, pass, period, tp_cent, tp_prev, tp_est_prev, r_p, array_size);
 
-	// (!) Store pass centroids and time estimations so they can be read again
-	// DEV ITEM: Need to make sure this data persists in between runs
+	// Store pass centroids and time estimations so they can be read again
 	tp_hist[*pass-1] = tp_cent_act;
 	tp_est_hist[*pass-1] = tp_est;
 	tp_err_hist[*pass-1] = tp_err_act;
 	
 	// (!) write to PTT
-	// DEV ITEM: Figure out form of Periapsis Time Table
 	// DEV ITEM: Write function to write to PTT
 	//PTT_write(tp_est);
 	
