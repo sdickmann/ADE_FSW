@@ -18,7 +18,7 @@
 #include <errno.h>
 #include <ctype.h>
 
-#define MAX_PASS 3000
+#define MAX_PASS 1800
 
 struct MulticallInfo;
 struct IMUData;
@@ -79,10 +79,7 @@ static int IMU_trigger(int argc, char **argv, struct MulticallInfo * self)
    
    struct {
       uint8_t cmd;
-	  struct IMUData {
-			double t[MAX_PASS];
-			double x[MAX_PASS];
-		} send_data;
+	  struct IMUData send_data;
    } __attribute__((packed)) send;
 
    send.cmd = cmd;
