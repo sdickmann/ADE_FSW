@@ -508,7 +508,7 @@ void IMU_trigger(int socket, unsigned char cmd, void *data, size_t dataLen, stru
 		point = (struct RespData*)data;
 		printf("\nelement 0 %lf\n", (point->a)[0]);
 		memcpy(resp.a, point->a, sizeof(point->a));
-		
+		printf("\nelement 0 %lf\n", resp.a[0]);
 		PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &resp, sizeof(resp), fromAddr);
 	} else 
 		PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &resp, sizeof(resp), fromAddr);
