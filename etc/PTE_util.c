@@ -67,12 +67,9 @@ static int IMU_trigger(int argc, char **argv, struct MulticallInfo * self)
 	
 	int cmd = 5;
 	
-	struct {
-		uint8_t cmd;
-		struct RespData {
-			double a[2];
-			double b[2];
-		} resp_data;
+	struct RespData {
+		double a[2];
+		double b[2];
     } __attribute__((packed)) resp;
 
    struct {
@@ -105,13 +102,9 @@ static int IMU_trigger(int argc, char **argv, struct MulticallInfo * self)
       return len;
    } // error if less than 0
 
-   if (resp.cmd != CMD_STATUS_RESPONSE) {
-	printf("response code incorrect, got 0x%02X expected 0x%02x\n", resp.cmd, CMD_STATUS_RESPONSE);
-	return 5;
-   }
 
    printf("\n---------------------------------------\n");
-   printf("%lf %lf\n", resp.resp_data.a[0], resp.resp_data.a[1]);
+   printf("%lf %lf\n", resp.a[0], resp.a[1]);
    //printf("Sent to PTE: %lf Returned: %lf Should be %lf\n", send.send_data, resp.resp_data.resp_altered, send.send_data + 1 - 2*!resp.resp_data.listen);
    printf("---------------------------------------\n");
    
