@@ -111,6 +111,7 @@ static int IMU_trigger(int argc, char **argv, struct MulticallInfo * self)
    }
 
    printf("\n---------------------------------------\n");
+   printf("%lf %lf\n", resp.resp_data.a[0], resp.resp_data.a[1]);
    //printf("Sent to PTE: %lf Returned: %lf Should be %lf\n", send.send_data, resp.resp_data.resp_altered, send.send_data + 1 - 2*!resp.resp_data.listen);
    printf("---------------------------------------\n");
    
