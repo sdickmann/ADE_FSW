@@ -83,7 +83,7 @@ static int IMU_trigger(int argc, char **argv, struct MulticallInfo * self)
    } __attribute__((packed)) send;
 
    send.cmd = cmd;
-   send.send_data.t[0] = 1;
+   //send.send_data.t[0] = 1;
    const char *ip = "224.0.0.1";
    int len, opt;
    
@@ -98,7 +98,7 @@ static int IMU_trigger(int argc, char **argv, struct MulticallInfo * self)
 
    // send packet
    if ((len = socket_send_packet_and_read_response(ip, "test1", &send, 
-    sizeof(send), &resp, sizeof(resp), 2000)) <= 0) {
+    sizeof(send), &resp, sizeof(resp), 5000)) <= 0) {
       return len;
    } // error if less than 0
 
