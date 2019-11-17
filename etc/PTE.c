@@ -483,8 +483,8 @@ void IMU_trigger(int socket, unsigned char cmd, void *data, size_t dataLen, stru
 	struct IMUData accel_data;
 	double *point;
 	struct RespData {
-		double resp_altered;
-		int listen;
+		double a[2];
+		double b[2];
 	};
 	
 	struct RespData resp;
@@ -496,13 +496,15 @@ void IMU_trigger(int socket, unsigned char cmd, void *data, size_t dataLen, stru
 		
 		// Debugging:
 		// import data
-		point = (double*)data;
+		/*point = (struct RespData*)data;
 		resp.resp_altered = *point + 1;
-		resp.listen = listen_IMU;
+		resp.listen = listen_IMU;*/
 		// End debug code
 		
 		// run PTE using IMU data
 		//PTE_control(accel_data, mode);
+		
+		//resp = data;
 		
 		PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &resp, sizeof(resp), fromAddr);
 	} else 

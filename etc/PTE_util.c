@@ -70,18 +70,23 @@ static int IMU_trigger(int argc, char **argv, struct MulticallInfo * self)
 	struct {
 		uint8_t cmd;
 		struct RespData {
-			double resp_altered;
-			int listen;
+			double a[2];
+			double b[2];
 		} resp_data;
     } __attribute__((packed)) resp;
 
    struct {
       uint8_t cmd;
-	  double send_data;
+	  struct SendData {
+			double a[2];
+			double b[2];
+		} send_data;
    } __attribute__((packed)) send;
 
    send.cmd = cmd;
-   send.send_data = 1;
+   send.send_data.a[0] = 1.5;
+   send.send_data.a[1] = 2.5;
+   send.send_data.b[0] = 1;
    const char *ip = "224.0.0.1";
    int len, opt;
    
