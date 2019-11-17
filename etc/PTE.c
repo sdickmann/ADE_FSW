@@ -598,7 +598,8 @@ void passive_mode(int socket, unsigned char cmd, void *data, size_t dataLen, str
 	pass_act += 1;
 	tp_hist[pass_act] = pass_act;
 	printf("here\n");
-	printf("Pass number: %d tp_hist[pass-1] = %Lf", pass_act-1, tp_hist[pass_act-1]);
+	printf("Pass number: %d\n", pass_act-1);
+    printf("tp_hist[pass-1] = %Lf\n", tp_hist[pass_act-1]);
 	mode = PASSIVE_MODE; // switch mode
 	
 	// Debugging:
