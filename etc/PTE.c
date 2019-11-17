@@ -593,7 +593,7 @@ void passive_mode(int socket, unsigned char cmd, void *data, size_t dataLen, str
 	struct PTEStatus status;
 
 	status.listen = 3; //listen_IMU;
-	status.mode = mode;
+	status.mode = 1; //mode;
 	
 	// Send back to debug util
 	PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &status, sizeof(status), fromAddr);
