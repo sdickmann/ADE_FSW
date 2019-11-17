@@ -66,11 +66,6 @@ static int IMU_trigger(int argc, char **argv, struct MulticallInfo * self)
 {
 	
 	int cmd = 5;
-	
-	struct RespData {
-		double a[2];
-		double b[2];
-    } __attribute__((packed)) resp;
 
    struct {
       uint8_t cmd;
@@ -95,17 +90,13 @@ static int IMU_trigger(int argc, char **argv, struct MulticallInfo * self)
       }
    }
    
-
+   printf("\n---------------------------------------\n");
    // send packet
    if ((len = socket_send_packet_and_read_response(ip, "test1", &send, 
-    sizeof(send), &resp, sizeof(resp), 2000)) <= 0) {
+    sizeof(send), NULL, 0, 2000)) <= 0) {
       return len;
    } // error if less than 0
 
-
-   printf("\n---------------------------------------\n");
-   printf("%lf %lf\n", resp.a[0], resp.a[1]);
-   //printf("Sent to PTE: %lf Returned: %lf Should be %lf\n", send.send_data, resp.resp_data.resp_altered, send.send_data + 1 - 2*!resp.resp_data.listen);
    printf("---------------------------------------\n");
    
    return 0;

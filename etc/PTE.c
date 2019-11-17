@@ -486,7 +486,7 @@ void IMU_trigger(int socket, unsigned char cmd, void *data, size_t dataLen, stru
 	struct RespData {
 		double a[2];
 		double b[2];
-	} __attribute__((packed));
+	};
 	
 	struct RespData *point;
 	
@@ -510,22 +510,16 @@ void IMU_trigger(int socket, unsigned char cmd, void *data, size_t dataLen, stru
 		memcpy(resp.a, point->a, sizeof(point->a));
 		memcpy(resp.b, point->b, sizeof(point->b));
 		
-		printf("\nsent.a[0]: %lf sent.b[0]: %lf\n", point->a[0], point->b[0]);
-		printf("\nresp.a[0]: %lf resp.b[0]: %lf\n", resp.a[0], resp.b[0]);
+		printf("sent.a[0]: %lf sent.b[0]: %lf\n", point->a[0], point->b[0]);
+		printf("resp.a[0]: %lf resp.b[0]: %lf\n", resp.a[0], resp.b[0]);
 		// End debug code
 		
 		// run PTE using IMU data
 		//PTE_control(accel_data, mode);
-		
-		point = (struct RespData*)data;
-		memcpy(resp.a, point->a, sizeof(point->a));
-		memcpy(resp.b, point->b, sizeof(point->b));
-		
-		printf("\nsent.a[0]: %lf sent.b[0]: %lf\n", point->a[0], point->b[0]);
-		printf("\nresp.a[0]: %lf resp.b[0]: %lf\n", resp.a[0], resp.b[0]);
-		PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &resp, sizeof(resp), fromAddr);
+
+		PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, NULL, 0, fromAddr);
 	} else 
-		PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &resp, sizeof(resp), fromAddr);
+		PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, NULL, 0, fromAddr);
 	
 	return;
 }
