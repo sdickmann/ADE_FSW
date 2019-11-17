@@ -89,7 +89,7 @@ static int IMU_trigger(int argc, char **argv, struct MulticallInfo * self)
 	*/
 	
    send.cmd = cmd;
-   send.send_data = 1;
+   //send.send_data = 1;
    const char *ip = "224.0.0.1";
    int len, opt;
    
