@@ -496,13 +496,17 @@ void IMU_trigger(int socket, unsigned char cmd, void *data, size_t dataLen, stru
 		
 		// Debugging:
 		// import data
-		point = (double*)data;
+		/*point = (double*)data;
 		resp.resp_altered = *point + 1;
-		resp.listen = listen_IMU;
+		resp.listen = listen_IMU;*/
 		// End debug code
 		
 		// run PTE using IMU data
 		//PTE_control(accel_data, mode);
+		
+		
+		resp.resp_altered = 1;
+		resp.listen = listen_IMU;
 		
 		PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &resp, sizeof(resp), fromAddr);
 	} else 
