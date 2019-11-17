@@ -18,7 +18,7 @@
 #include <errno.h>
 #include <ctype.h>
 
-#define MAX_PASS 1500
+#define MAX_PASS 3000
 
 struct MulticallInfo;
 struct IMUData;
@@ -28,6 +28,9 @@ static int PTE_passive(int, char**, struct MulticallInfo *);
 static int PTE_active(int, char**, struct MulticallInfo *);
 static int PTE_status(int, char**, struct MulticallInfo *);
 static int IMU_trigger(int, char**, struct MulticallInfo *);
+
+// structures
+
 
 // struct holding all possible function calls
 // running the executable with the - flags will call that function
@@ -72,18 +75,13 @@ static int IMU_trigger(int argc, char **argv, struct MulticallInfo * self)
 		} resp_data;
     } __attribute__((packed)) resp;
 
-   /*struct {
-      uint8_t cmd;
-	  double send_data;
-   } __attribute__((packed)) send;*/
-   
    struct {
       uint8_t cmd;
-	  struct IMUData send_data;
+	  double send_data;
    } __attribute__((packed)) send;
 
    send.cmd = cmd;
-   //send.send_data.t[0] = 1;
+   send.send_data = 1;
    const char *ip = "224.0.0.1";
    int len, opt;
    
@@ -98,7 +96,7 @@ static int IMU_trigger(int argc, char **argv, struct MulticallInfo * self)
 
    // send packet
    if ((len = socket_send_packet_and_read_response(ip, "test1", &send, 
-    sizeof(send), &resp, sizeof(resp), 5000)) <= 0) {
+    sizeof(send), &resp, sizeof(resp), 2000)) <= 0) {
       return len;
    } // error if less than 0
 
@@ -108,7 +106,7 @@ static int IMU_trigger(int argc, char **argv, struct MulticallInfo * self)
    }
 
    printf("\n---------------------------------------\n");
-   //printf("Sent to PTE: %lf Returned: %lf Should be %lf\n", send.send_data, resp.resp_data.resp_altered, send.send_data + 1 - 2*!resp.resp_data.listen);
+   printf("Sent to PTE: %lf Returned: %lf Should be %lf\n", send.send_data, resp.resp_data.resp_altered, send.send_data + 1 - 2*!resp.resp_data.listen);
    printf("---------------------------------------\n");
    
    return 0;
