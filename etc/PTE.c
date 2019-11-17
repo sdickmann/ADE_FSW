@@ -594,6 +594,10 @@ void start(int socket, unsigned char cmd, void *data, size_t dataLen, struct soc
 
 void passive_mode(int socket, unsigned char cmd, void *data, size_t dataLen, struct sockaddr_in *fromAddr){
 
+	
+	pass_act += 1;
+	tp_hist[pass_act] = pass_act;
+	printf("Pass number: %d tp_hist[pass-1] = %lf", pass_act-1, tp_hist[pass_act-1]);
 	mode = PASSIVE_MODE; // switch mode
 	
 	// Debugging:
