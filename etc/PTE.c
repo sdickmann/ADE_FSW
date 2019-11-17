@@ -487,7 +487,7 @@ void IMU_trigger(int socket, unsigned char cmd, void *data, size_t dataLen, stru
 		int listen;
 	};
 	
-	struct RespData resp;
+	struct IMUData resp;
 	
 	if (listen_IMU){
 		// (!) make sure input data is in correct format
@@ -496,9 +496,9 @@ void IMU_trigger(int socket, unsigned char cmd, void *data, size_t dataLen, stru
 		
 		// Debugging:
 		// import data
-		point = (double*)data;
+		/*point = (double*)data;
 		resp.resp_altered = *point + 1;
-		resp.listen = listen_IMU;
+		resp.listen = listen_IMU;*/
 		// End debug code
 		
 		// run PTE using IMU data

@@ -66,6 +66,16 @@ static int IMU_trigger(int argc, char **argv, struct MulticallInfo * self)
 	
 	struct {
 		uint8_t cmd;
+		struct IMUData resp_data;
+    } __attribute__((packed)) resp;
+	
+	struct {
+      uint8_t cmd;
+	  struct IMUData send_data;
+   } __attribute__((packed)) send;
+   
+	/*struct {
+		uint8_t cmd;
 		struct RespData {
 			double resp_altered;
 			int listen;
@@ -76,7 +86,8 @@ static int IMU_trigger(int argc, char **argv, struct MulticallInfo * self)
       uint8_t cmd;
 	  double send_data;
    } __attribute__((packed)) send;
-
+	*/
+	
    send.cmd = cmd;
    send.send_data = 1;
    const char *ip = "224.0.0.1";
@@ -102,9 +113,9 @@ static int IMU_trigger(int argc, char **argv, struct MulticallInfo * self)
 	return 5;
    }
 
-   printf("\n---------------------------------------\n");
+   /*printf("\n---------------------------------------\n");
    printf("Sent to PTE: %lf Returned: %lf Should be %lf\n", send.send_data, resp.resp_data.resp_altered, send.send_data + 1 - 2*!resp.resp_data.listen);
-   printf("---------------------------------------\n");
+   printf("---------------------------------------\n");*/
    
    return 0;
 }
