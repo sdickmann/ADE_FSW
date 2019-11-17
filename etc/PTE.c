@@ -517,9 +517,9 @@ void IMU_trigger(int socket, unsigned char cmd, void *data, size_t dataLen, stru
 		// run PTE using IMU data
 		//PTE_control(accel_data, mode);
 
-		PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, NULL, 0, fromAddr);
+		PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &resp, sizeof(resp), fromAddr);
 	} else 
-		PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, NULL, 0, fromAddr);
+		PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &resp, sizeof(resp), fromAddr);
 	
 	return;
 }
