@@ -481,10 +481,12 @@ void PTE_control(struct IMUData data, int mode)
 void IMU_trigger(int socket, unsigned char cmd, void *data, size_t dataLen, struct sockaddr_in *fromAddr){
 	
 	struct IMUData accel_data;
+	struct IMUData *IMUptr;
+	
 	struct RespData {
 		double a[2];
 		double b[2];
-	};
+	} __attribute__((packed));
 	
 	struct RespData *point;
 	
@@ -493,13 +495,23 @@ void IMU_trigger(int socket, unsigned char cmd, void *data, size_t dataLen, stru
 	if (listen_IMU){
 		// (!) make sure input data is in correct format
 		// DEV ITEM: Figure out best way to send data (UDP packet may be too small)
-		// DEV ITEM: Write code to transfer IMU data from sent struct to IMUData struct
+		/* below code applies if data from IMU is input as void pointer in IMUData struct
+		*IMUptr = (struct IMUData*)data;
+		memcpy(accel_data.t, IMUptr->t, sizeof(IMUptr->t));
+		memcpy(accel_data.x, IMUptr->x, sizeof(IMUptr->x));
+		memcpy(accel_data.y, IMUptr->y, sizeof(IMUptr->y));
+		memcpy(accel_data.z, IMUptr->z, sizeof(IMUptr->z));
+		memcpy(accel_data.temp, IMUptr->temp, sizeof(IMUptr->temp));
+		*/
 		
 		// Debugging:
 		// import data
-		/*point = (struct RespData*)data;
-		resp.resp_altered = *point + 1;
-		resp.listen = listen_IMU;*/
+		point = (struct RespData*)data;
+		memcpy(resp.a, point->a, sizeof(point->a));
+		memcpy(resp.b, point->b, sizeof(point->b));
+		
+		printf("\nsent.a[0]: %lf sent.b[0]: %lf\n", point->a[0], point->b[0]);
+		printf("\nresp.a[0]: %lf resp.b[0]: %lf\n", resp.a[0], resp.b[0]);
 		// End debug code
 		
 		// run PTE using IMU data
