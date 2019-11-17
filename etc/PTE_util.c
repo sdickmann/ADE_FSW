@@ -24,7 +24,7 @@ struct MulticallInfo;
 struct IMUData;
 
 static int PTE_start(int, char**, struct MulticallInfo *);
-static int PTE_safe(int, char**, struct MulticallInfo *);
+static int PTE_passive(int, char**, struct MulticallInfo *);
 static int PTE_active(int, char**, struct MulticallInfo *);
 static int PTE_status(int, char**, struct MulticallInfo *);
 static int IMU_trigger(int, char**, struct MulticallInfo *);
@@ -40,8 +40,8 @@ struct MulticallInfo {
 } multicall[] = {
    { &PTE_start, "PTE_start", "-I", 
        "Start PTE -I" }, 
-   { &PTE_safe, "PTE_safe", "-S", 
-       "Put PTE in safe mode -S" }, 
+   { &PTE_passive, "PTE_passive", "-S", 
+       "Put PTE in passive mode -S" }, 
 	{ &PTE_active, "PTE_active", "-A", 
        "PUT PTE in active mode -A" }, 
 	{ &PTE_status, "PTE_status", "-D",
@@ -103,7 +103,7 @@ static int IMU_trigger(int argc, char **argv, struct MulticallInfo * self)
    }
 
    printf("\n---------------------------------------\n");
-   printf("Sent: %lf Received: %lf Should be %lf\n", send.send_data, resp.resp_data.resp_altered, send.send_data + 1 - 2*!resp.resp_data.listen);
+   printf("Sent to PTE: %lf Returned: %lf Should be %lf\n", send.send_data, resp.resp_data.resp_altered, send.send_data + 1 - 2*!resp.resp_data.listen);
    printf("---------------------------------------\n");
    
    return 0;
@@ -155,7 +155,7 @@ static int PTE_start(int argc, char **argv, struct MulticallInfo * self)
    if (resp.flags.mode)
 	printf("PTE mode: ACTIVE_MODE\n");
    else
-	printf("PTE mode: SAFE_MODE\n");
+	printf("PTE mode: PASSIVE_MODE\n");
 	printf("---------------------------------------\n");
 	
    return 0;
@@ -166,7 +166,7 @@ static int PTE_start(int argc, char **argv, struct MulticallInfo * self)
  * @param argv char array of command line arguments
  * @return 0 on succes, failure otherwise
  */
-static int PTE_safe(int argc, char **argv, struct MulticallInfo * self) 
+static int PTE_passive(int argc, char **argv, struct MulticallInfo * self) 
 {
 	
 	int cmd = 3;
@@ -212,7 +212,7 @@ static int PTE_safe(int argc, char **argv, struct MulticallInfo * self)
    if (resp.flags.mode)
 	printf("PTE mode: ACTIVE_MODE\n");
    else
-	printf("PTE mode: SAFE_MODE\n");
+	printf("PTE mode: PASSIVE_MODE\n");
 	printf("---------------------------------------\n");
 
    return 0;
@@ -264,7 +264,7 @@ static int PTE_active(int argc, char **argv, struct MulticallInfo * self)
    if (resp.flags.mode)
 	printf("PTE mode: ACTIVE_MODE\n");
    else
-	printf("PTE mode: SAFE_MODE\n");
+	printf("PTE mode: PASSIVE_MODE\n");
 	printf("---------------------------------------\n");
 
    return 0;
@@ -321,7 +321,7 @@ static int PTE_status(int argc, char **argv, struct MulticallInfo * self)
    if (resp.flags.mode)
 	printf("PTE mode: ACTIVE_MODE\n");
    else
-	printf("PTE mode: SAFE_MODE\n");
+	printf("PTE mode: PASSIVE_MODE\n");
 	printf("Pass #: %d\n", resp.flags.pass);
 	printf("Threshold: %lf\n", resp.flags.threshold);
 	printf("DeltaV: %Lf\n", resp.flags.delta_V);

@@ -12,7 +12,7 @@
 #define SIZE 4 //(n+1) order of temp correction
 #define WINDOW 120 // size of window filter
 #define CALIBRATION_PERIOD 150 // size of calibration period, seconds
-#define SAFE_MODE 0 // safe mode flag
+#define PASSIVE_MODE 0 // passive mode flag
 #define ACTIVE_MODE 1 // active mode flag
 
 // structures
@@ -35,7 +35,7 @@ double window_filter(double accel[], int n, double filter[]); // window filter f
 // global variables
 static ProcessData *proc = NULL; // process data
 static double r_p; // Radius of periapsis (km)
-static int mode; // Flag for mode (0: safe, 1: active)
+static int mode; // Flag for mode (0: passive, 1: active)
 static int pass_act; // Pass number	
 static long double tp_err_act; // Current periapsis error
 static long double period_act; // Current orbit period
@@ -421,6 +421,7 @@ void reschedule_IMU(){
 	int cmd = 1; // (!) command number for IMU rescheduling
 	
 	// (!) Command IMU
+	// DEV ITEM: On IMU side, write function to read PTT and schedule collection
 	PROC_cmd(proc, cmd, &mode, sizeof(mode), "IMU");
 	
 }
@@ -472,7 +473,8 @@ void PTE_control(struct IMUData data, int mode)
 	//PTT_write(tp_est);
 	
 	// reschedule IMU based on mode
-	reschedule_IMU();
+	if (mode == ACTIVE_MODE)
+		reschedule_IMU();
 	
 }
 
@@ -490,18 +492,20 @@ void IMU_trigger(int socket, unsigned char cmd, void *data, size_t dataLen, stru
 	if (listen_IMU){
 		// (!) make sure input data is in correct format
 		// DEV ITEM: Figure out best way to send data (UDP packet may be too small)
-		// DEV ITEM: Write code to transfer data
+		// DEV ITEM: Write code to transfer IMU data from sent struct to IMUData struct
 		
+		// Debugging:
 		// import data
 		point = (double*)data;
 		resp.resp_altered = *point + 1;
 		resp.listen = listen_IMU;
-
+		// End debug code
+		
 		// run PTE using IMU data
 		//PTE_control(accel_data, mode);
 		
 		PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &resp, sizeof(resp), fromAddr);
-	} else
+	} else 
 		PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &resp, sizeof(resp), fromAddr);
 	
 	return;
@@ -538,6 +542,7 @@ void status(int socket, unsigned char cmd, void *data, size_t dataLen, struct so
 	// Debugging:
 	// Send back to debug util
 	PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &status, sizeof(status), fromAddr);
+	// End debug code
 	
 	return;
 }
@@ -552,7 +557,7 @@ void start(int socket, unsigned char cmd, void *data, size_t dataLen, struct soc
 	//else
 		r_p = 6563.1; // from launch vehicle
 	
-	mode = SAFE_MODE; // safe mode on start
+	mode = PASSIVE_MODE; // passive mode on start
 	listen_IMU = 1; // accept data from IMU flag
 
 	// Debugging:
@@ -574,9 +579,9 @@ void start(int socket, unsigned char cmd, void *data, size_t dataLen, struct soc
 	return;
 }
 
-void safe_mode(int socket, unsigned char cmd, void *data, size_t dataLen, struct sockaddr_in *fromAddr){
+void passive_mode(int socket, unsigned char cmd, void *data, size_t dataLen, struct sockaddr_in *fromAddr){
 
-	mode = SAFE_MODE; // switch mode
+	mode = PASSIVE_MODE; // switch mode
 	
 	// Debugging:
 	// package data for sending back response while debugging
@@ -634,7 +639,7 @@ int main(int argc, char *argv[])
 
 	//Initialize variables in case IMU starts without starting PTE
 	r_p = 6563.1; // from launch vehicle
-	mode = SAFE_MODE; // default to safe mode
+	mode = PASSIVE_MODE; // default to passive mode
 	
 	//Start main event loop
 	EVT_start_loop(PROC_evt(proc));	
