@@ -567,7 +567,7 @@ void start(int socket, unsigned char cmd, void *data, size_t dataLen, struct soc
 	//else
 		r_p = 6563.1; // from launch vehicle
 	
-	mode = PASSIVE_MODE; // passive mode on start
+	mode = ACTIVE_MODE; // passive mode on start
 	listen_IMU = 1; // accept data from IMU flag
 
 	// Debugging:
