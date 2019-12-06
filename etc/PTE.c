@@ -1,31 +1,57 @@
-//headers
+// headers
 #include <math.h>
 #include <polysat/polysat.h>
-//#include <libpolydrivers.h>
+#include <polysat/cmd.h>
+#include <polysat/events.h>
+#include <polysat/proclib.h>
 
-//definitions
+// definitions
 #define MAX_PASS 3000
-#define T_STEP 1 //nominal time step
+#define T_STEP 1 // nominal time step
 #define PTE_CYCLE 1500
 #define SIZE 4 //(n+1) order of temp correction
-#define WINDOW 120 //size of window filter
-#define CALIBRATION_PERIOD 150 //size of calibration period, seconds
-//structures
+#define WINDOW 120 // size of window filter
+#define CALIBRATION_PERIOD 150 // size of calibration period, seconds
+#define PASSIVE_MODE 0 // passive mode flag
+#define ACTIVE_MODE 1 // active mode flag
+
+// structures
 struct IMUData {
 	double t[MAX_PASS];
 	double x[MAX_PASS];
 	double y[MAX_PASS];
 	double z[MAX_PASS];
 	double temp[MAX_PASS];
-};
+}; // struct to hold data from IMU
+
+// function declarations
+void mat_minor(long double mat[][SIZE], long double cofac[][SIZE], int r, int c, int n); // calculate minor of matrix
+long double det(long double mat[][SIZE], int n); // calculate determinant of matrix
+int inv(long double mat[][SIZE], long double mat_inv[][SIZE], int n); // calculate inverse of matrix
+void temp_correction(double time[], double accel[], double temp[], int n, double filtered[]); // temperature correction function
+double mean_window(double data[], int n); // calculate mean of window for window filter
+double window_filter(double accel[], int n, double filter[]); // window filter function for processing data
+
+// global variables
+static ProcessData *proc = NULL; // process data
+static double r_p; // Radius of periapsis (km)
+static int mode; // Flag for mode (0: passive, 1: active)
+static int pass_act; // Pass number	
+static long double tp_err_act; // Current periapsis error
+static long double period_act; // Current orbit period
+static long double tp_cent_act; // Current centroid
+static int listen_IMU = 0; // Listen to IMU or not
+static long double tp_hist[MAX_PASS] = {0}; // Periapsis time history
+static long double tp_est_hist[MAX_PASS] = {0}; // Periapsis estimation time history
+static long double tp_err_hist[MAX_PASS] = {0}; // Error time history
+static double th; // Threshold value
+static double dV; // Delta-V (km/s)
 
 //functions
-void minor(long double mat[][SIZE], long double cofac[][SIZE], int r, int c, int n){
+void mat_minor(long double mat[][SIZE], long double cofac[][SIZE], int r, int c, int n){
 
-	long double mat_det=0;
 	int i;
 	int j;
-	int k=0;
 	long double hold_val;
 
 	for (i=0;i<n;i++){
@@ -33,13 +59,13 @@ void minor(long double mat[][SIZE], long double cofac[][SIZE], int r, int c, int
 			for (j=0;j<n;j++){
 				if (j != c){
 					hold_val = mat[i][j];
-					if (i < r & j < c)
+					if ( (i < r) & (j < c) )
 						cofac[i][j] = hold_val;
-					else if (i > r & j < c)
+					else if ( (i > r) & (j < c) )
 						cofac[i-1][j] = hold_val;
-					else if (i < r & j > c)
+					else if ( (i < r) & (j > c) )
 						cofac[i][j-1] = hold_val;
-					else if (i > r & j > c)
+					else if ( (i > r) & (j > c) )
 						cofac[i-1][j-1] = hold_val;
 				}
 			}
@@ -70,14 +96,14 @@ long double det(long double mat[][SIZE], int n){
 	if (n != SIZE){
 		for (k=0;k<n;k++){
 			for (j=0;j<n;j++){
-				if (k == 0 & j < n){
+				if ( (k == 0) & (j < n) ){
 					mat[k][j+m] = mat_hold[k][j];
-				} else if (k == 0 & j == n){
+				} else if ( (k == 0) & (j == n) ){
 					mat[k+1][0] = mat_hold[k][j];
 					m++;
-				} else if (k > 0 & j < n-m){
+				} else if ( (k > 0) & (j < n-m) ){
 					mat[k][j+m] = mat_hold[k][j];
-				} else if (k>0 & j >= n-m & j <SIZE){
+				} else if ( (k > 0) & (j >= n-m) & (j < SIZE) ){
 					mat[k+1][m-1] = mat_hold[k][j];
 					m++;
 				}
@@ -92,7 +118,7 @@ long double det(long double mat[][SIZE], int n){
 	} else {
 		for (i = 0; i < n; i++){
 			mat_val = mat[0][i];
-			minor(mat,cofac,0,i,n);
+			mat_minor(mat,cofac,0,i,n);
 			det_hold = det(cofac,n-1);
 			mat_det += mat_val*pow(-1,i)*det_hold;
 		}
@@ -112,7 +138,7 @@ int inv(long double mat[][SIZE], long double mat_inv[][SIZE], int n){
 	
 	for (i = 0; i<n; i++){
 		for (j=0;j<n;j++){
-			minor(mat, minor_mat, i, j, n);
+			mat_minor(mat, minor_mat, i, j, n);
 			cofac[i][j] = pow(-1,i+j+2)*det(minor_mat, n-1);
 			cofac_mat[i][j] = cofac[i][j];
 		}
@@ -146,13 +172,12 @@ void temp_correction(double time[], double accel[], double temp[], int n, double
 	int i;
 	int j;
 	long double coef[SIZE]={0};
-	long double xtx[SIZE][SIZE]={0};
+	long double xtx[SIZE][SIZE]={{0}};
 	int k;
 	long double xtx_inv[SIZE][SIZE];
-	long double inv_xt[SIZE][2*CALIBRATION_PERIOD]={0};
-	int invertible;
+	long double inv_xt[SIZE][2*CALIBRATION_PERIOD]={{0}};
 	
-	// note: this filter was designed for a cubic fit
+	// note: this filter was designed and tested for a cubic fit
 
 	for (i=0;i<CALIBRATION_PERIOD;i++){
 		X[i][0] = pow(temp[i], 3);
@@ -264,7 +289,6 @@ double PTE_process(struct IMUData data, double t_step, double a_filter[], int ar
 {
 	double a_mag[(int) floor(PTE_CYCLE/t_step)]; // should hold 25 minutes of data
 	double corrected[(int) floor(PTE_CYCLE/t_step)];
-	double th; // threshold value
 	int i;
 
 	// read IMU
@@ -391,52 +415,43 @@ long double PTE(double a_m[], double t[],  double th, double t_step, long double
 	*pass = *pass + 1;
 	return tp_est;
 }
-
-void PTE_start(int socket, unsigned char cmd, void * data, size_t dataLen, struct sockaddr_in * src)
-{
-	//this function is used to start PTE and IMU? from ground command
-
-	PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &status, sizeof(status), src);
+	
+void reschedule_IMU(){
+	
+	int cmd = 1; // (!) command number for IMU rescheduling
+	
+	// (!) Command IMU
+	// DEV ITEM: On IMU side, write function to read PTT and schedule collection
+	PROC_cmd(proc, cmd, &mode, sizeof(mode), "IMU");
+	
 }
 
-int sigint_handler(int signum, void *arg)
+void PTE_control(struct IMUData data, int mode)
 {
-	EVT_exit_loop(PROC_evt(arg));
-	return EVENT_KEEP;
-}
-
-void PTE_control(struct IMUData data)
-{
-	double t_step; // time step of data
-	double a_m[MAX_PASS]; // filtered acceleration magnitude data
+	double t_step; // Time step of data (s)
+	double a_m[MAX_PASS]; // Filtered acceleration magnitude data
 	int array_size; // a_m array size (depends on time step)
-	double th; // this should be a pointer
-	long double tp_est; // periapsis time estimations
-	long double tp_err_act;
-	long double *tp_err; // periapsis time estimation error
-	int *pass; // pass number pointer
-	int pass_act;
-	long double *period; // orbit period
-	long double period_act;
-	long double tp_hist[MAX_PASS]; // periapsis time history (need to make variable)
-	long double *tp_cent; // centroided periapsis
-	long double tp_cent_act;
-	long double tp_prev; // hold previous periapsis
-	long double tp_est_prev; // hold previous periapsis estimation
-	long double tp_est_hist[MAX_PASS]; // periapsis estimation time history (need to make variable)
-	double r_p; // radius of periapsis
-	double t[MAX_PASS];
+	long double tp_est; // Periapsis time estimations
+	long double *tp_err; // Periapsis time estimation error
+	int *pass; // Pass number pointer
+	long double *period; // Orbit period pointer
+	long double *tp_cent; // Centroided periapsis
+	long double tp_prev; // Hold previous periapsis
+	long double tp_est_prev; // Hold previous periapsis estimation
+	double t[MAX_PASS]; 
 
-	// initialize pointers
+	// Initialize pointers
 	pass = &pass_act;	
-	*pass = 1; // on initialization
 	tp_err = &tp_err_act;
 	period = &period_act;
 	tp_cent = &tp_cent_act;
 	
-	// read IMU
-	// get radius of periapsis
-	r_p = 6563.1; // hardcoded for now
+	// (!) Read latest data
+	// DEV ITEM: Decide where radius of periapsis is stored
+	// DEV ITEM: Write function to read radius of periapsis
+	tp_prev = tp_hist[*pass-1];
+	tp_est_prev = tp_est_hist[*pass-1];
+	//r_p = read_r_p();
 	
 	t_step = data.t[1]-data.t[0];
 	array_size = floor(PTE_CYCLE/t_step);
@@ -445,27 +460,201 @@ void PTE_control(struct IMUData data)
 	
 	tp_est = PTE(a_m, t, th, t_step, tp_err, pass, period, tp_cent, tp_prev, tp_est_prev, r_p, array_size);
 
-	tp_prev = *tp_cent;
-	tp_hist[*pass-1] = tp_prev;
-	tp_est_prev = tp_est;
-	tp_est_hist[*pass-1] = tp_est_prev;
+	// Store pass centroids and time estimations so they can be read again
+	tp_hist[*pass-1] = tp_cent_act;
+	tp_est_hist[*pass-1] = tp_est;
+	tp_err_hist[*pass-1] = tp_err_act;
+	
+	// (!) write to PTT
+	// DEV ITEM: Write function to write to PTT
+	//PTT_write(tp_est);
+	
+	// reschedule IMU based on mode
+	if (mode == ACTIVE_MODE)
+		reschedule_IMU();
+	
+}
 
-	//schedule next PTE run	
+void IMU_trigger(int socket, unsigned char cmd, void *data, size_t dataLen, struct sockaddr_in *fromAddr){
+	
+	struct IMUData accel_data;
+	struct IMUData *IMUptr;
+	
+	struct RespData {
+		double a[2];
+		double b[2];
+	};
+	
+	struct RespData *point;
+	
+	struct RespData resp;
+	
+	if (listen_IMU){
+		// (!) make sure input data is in correct format
+		// DEV ITEM: Figure out best way to send data (UDP packet may be too small)
+		/* below code applies if data from IMU is input as void pointer in IMUData struct
+		*IMUptr = (struct IMUData*)data;
+		memcpy(accel_data.t, IMUptr->t, sizeof(IMUptr->t));
+		memcpy(accel_data.x, IMUptr->x, sizeof(IMUptr->x));
+		memcpy(accel_data.y, IMUptr->y, sizeof(IMUptr->y));
+		memcpy(accel_data.z, IMUptr->z, sizeof(IMUptr->z));
+		memcpy(accel_data.temp, IMUptr->temp, sizeof(IMUptr->temp));
+		*/
+		
+		// Debugging:
+		// import data
+		point = (struct RespData*)data;
+		memcpy(resp.a, point->a, sizeof(point->a));
+		memcpy(resp.b, point->b, sizeof(point->b));
+		
+		printf("sent.a[0]: %lf sent.b[0]: %lf\n", point->a[0], point->b[0]);
+		printf("resp.a[0]: %lf resp.b[0]: %lf\n", resp.a[0], resp.b[0]);
+		// End debug code
+		
+		// run PTE using IMU data
+		//PTE_control(accel_data, mode);
+
+		PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &resp, sizeof(resp), fromAddr);
+	} else 
+		PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &resp, sizeof(resp), fromAddr);
+	
+	return;
+}
+
+static int sigint_handler(int signum, void *arg)
+{
+   EVT_exit_loop(PROC_evt(arg));
+   return EVENT_KEEP;
+}
+
+void status(int socket, unsigned char cmd, void *data, size_t dataLen, struct sockaddr_in *fromAddr){
+	
+	struct PTEStatus {
+		int pass;
+		double threshold;
+		long double delta_V;
+		long double error;
+		long double estimation;
+		int listen;
+		int mode;
+	};
+		
+	struct PTEStatus status;
+	
+	status.pass = pass_act;
+	status.threshold = th;
+	status.delta_V = dV;
+	status.error = tp_err_act;
+	status.estimation = tp_est_hist[pass_act-1];
+	status.listen = listen_IMU;
+	status.mode = mode;
+	
+	// Debugging:
+	// Send back to debug util
+	PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &status, sizeof(status), fromAddr);
+	// End debug code
+	
+	return;
+}
+
+void start(int socket, unsigned char cmd, void *data, size_t dataLen, struct sockaddr_in *fromAddr){
+	// (!) read R_p from somewhere
+	// DEV ITEM: Decide where radius of periapsis is stored
+	// DEV ITEM: Write function to read radius of periapsis
+	// DEV ITEM: Figure out flag to indicate that a radius of periapsis has been uplinked
+	//if (R_p uplinked)
+		//r_p = read_r_p();
+	//else
+		r_p = 6563.1; // from launch vehicle
+	
+	mode = PASSIVE_MODE; // passive mode on start
+	listen_IMU = 1; // accept data from IMU flag
+
+	// Debugging:
+	// package data for sending back response while debugging
+	struct PTEStatus {
+		int listen;
+		int mode;
+	};
+		
+	struct PTEStatus status;
+
+	status.listen = listen_IMU;
+	status.mode = mode;
+	
+	// Send back to debug util
+	PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &status, sizeof(status), fromAddr);
+	// End debug code
+	
+	return;
+}
+
+void passive_mode(int socket, unsigned char cmd, void *data, size_t dataLen, struct sockaddr_in *fromAddr){
+
+	mode = PASSIVE_MODE; // switch mode
+	
+	// Debugging:
+	// package data for sending back response while debugging
+	struct PTEStatus {
+		int listen;
+		int mode;
+	};
+		
+	struct PTEStatus status;
+
+	status.listen = listen_IMU;
+	status.mode = mode;
+
+	// Send back to debug util
+	PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &status, sizeof(status), fromAddr);
+	// End debug code
+	
+	return;	
+}
+
+void active_mode(int socket, unsigned char cmd, void *data, size_t dataLen, struct sockaddr_in *fromAddr){
+	
+	mode = ACTIVE_MODE; // switch mode
+	
+	// Debugging:
+	// package data for sending back response while debugging
+	struct PTEStatus {
+		int listen;
+		int mode;
+	};
+		
+	struct PTEStatus status;
+
+	status.listen = listen_IMU;
+	status.mode = mode;
+	
+	// Send back to debug util
+	PROC_cmd_sockaddr(proc, CMD_STATUS_RESPONSE, &status, sizeof(status), fromAddr);
+	// End debug code
+	
+	return;
 }
 
 int main(int argc, char *argv[])
 {
-	//ProcessData proc
+	memset(&proc, 0, sizeof(proc));
 
 	//initialize process
-	//proc = PROC_init("PTE", WD_DISABLE); //watchdog or no?
-	//PROC_signal(proc, SIGINT, &sigint_handler, proc);
+	proc = PROC_init("test1", WD_ENABLED); //watchdog disabled for testing
+	if (!proc)
+		return -1;
 
-	//initialize IMU
+	//SIGINT Handler
+	PROC_signal(proc, SIGINT, &sigint_handler, proc);
 
-	//EVT_start_loop(PROC_event(proc));	
+	//Initialize variables in case IMU starts without starting PTE
+	r_p = 6563.1; // from launch vehicle
+	mode = PASSIVE_MODE; // default to passive mode
+	
+	//Start main event loop
+	EVT_start_loop(PROC_evt(proc));	
 
-	//cleanup
-	//PROC_cleanup(proc);
+	//Cleanup on exit
+	PROC_cleanup(proc);
 	return 0;
 }
